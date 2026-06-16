@@ -40193,6 +40193,630 @@
       "tag": "suspicious",
       "tlp": "white",
       "value": "smartape.net"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "quantumithelp.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "neonitsupport.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "netbitstats.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "androidpushalert.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "cybercoreops.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "cybergridsupport.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "isplteconfig.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "neocoreassist.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "updatetelemetry.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "neonbytetech.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "quantumtechlink.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "neonetops.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "androidpatch.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "adsnocollect.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "connectivitychecker.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "mobilereporter.net"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "syncupdates.net"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "netchecknow.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "routeapiconnect.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "swift-stats.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "translateusercontent.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "quantumechotech.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "emaildefenderpro.net"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "dailyhumor.org"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "androiddevicecare.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "androidupdatecenter.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "rcsqualitycheck.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "phonenetfix.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "virtmngradmin.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "virtualechoops.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "quantumtechops.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "ispnetconfig.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "virtualsyncassist.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "mobilenetassist.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "firetimedatabase.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "syncmngrapi.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "afrservicedatabase.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "androidservic.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "firebasemassage.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "myqualitycheck.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "bitstreamfix.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "edchconfigcdn.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "cybertechassist.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "holotechsupport.com"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "smartphoneconnect.net"
+    },
+    {
+      "type": "domain",
+      "tag": "apt",
+      "tlp": "white",
+      "value": "aiinsightscollector.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "mymap-find.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "cloneold.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "cep3d.net"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "gropixel.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "yingmeewanich.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "khoxaydung.net"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "proxyvps.net"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "phamanhhong.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "fxkasou-sagi.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "wefcolombialatam.org"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "app-live.info"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "help-mymap.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "imap-center.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "imap-help.info"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "info-mymap.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "info-mydevice.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "map-myview.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "map-mydevice.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "map-view.center"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "mymap-info.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "support-mymap.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "mymap-center.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "view-mymap.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "help-id.co"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "apple-id-assitance.help"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "findmy-iphone.net"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "assistance-photos.app"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "authid-location.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "auth-mylocation.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "es-buscar.app"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "find-my-location.co"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "apple-support.co"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "findmy-devices-support.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "findmyicloud.app"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "findmyapple-id.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "icloud-findmysupport.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "photos-assitanceid.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "support-findmyapple.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "trova-findmy.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "happy-money.cyou"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "nhatrangenjoy.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "chertown.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "brocantethefarm.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "seguroparalamascota.com"
+    },
+    {
+      "type": "domain",
+      "tag": "malicious",
+      "tlp": "white",
+      "value": "map-devices.support"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "icedns.is"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "no-ip.com"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "easydns.net"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "freedns1.registrar-servers.com"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "freedns3.registrar-servers.com"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "freedns2.registrar-servers.com"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "spaceship.net"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "freedns4.registrar-servers.com"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "regway.com"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "blnwx.com"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "rrpproxy.net"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "pananames.com"
+    },
+    {
+      "type": "ns",
+      "tag": "suspicious",
+      "tlp": "white",
+      "value": "freedns5.registrar-servers.com"
     }
   ]
 }
