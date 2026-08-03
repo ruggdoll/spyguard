@@ -62,6 +62,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Remaining 4 xfail: "GET on mutation route should return 405" — masked by the `GET /<p>/<path:path>`
 catch-all in `api/admin/main.py` which intercepts before Flask can return 405.
 
+### Task 4 — Mise à jour et harmonisation des dépendances
+
+#### Python
+- `PyJWT 1.7.1 → 2.13.0` — `jwt.encode()` retourne désormais `str` (plus `bytes`). Nettoyage du
+  code `.decode("utf8") if type(token) == bytes else token` dans `main.py` et `conftest.py`.
+  `datetime.datetime.utcnow()` remplacé par `datetime.datetime.now(datetime.timezone.utc)`.
+- `SQLAlchemy 1.4.44 → 2.0.51` — Migration des APIs supprimées en 2.0 :
+  - `mapper()` → `registry().map_imperatively()` dans `app/db/models.py`
+  - `MetaData(bind=engine)` → `MetaData()` dans `app/__init__.py` et `app/db/__init__.py`
+  - `Table(..., autoload=True)` → `Table(..., autoload_with=engine)`
+  - `create_engine(url, convert_unicode=True)` → `create_engine(url)`
+  - `sessionmaker(bind=engine, autocommit=False, autoflush=False)` → `sessionmaker(engine, autoflush=False)`
+  - Le style de requête "legacy" (`session.query()`) reste utilisé ; il fonctionne en 2.0.
+
+#### JavaScript
+- `ui/admin/package.json` : `axios ^0.21.1 → ^1.15.0`, aligné sur `ui/capture/package.json`
+
+#### Tests après tâche 4
+```
+20 passed, 4 xfailed, 0 warnings
+```
+
 ### Planned
 - Fix HTTP verbs: GET → PATCH/PUT for all state-mutating routes (DONE — task 9)
 - Update and harmonize Python/JS dependencies (PyJWT 2.x, SQLAlchemy 2.0, axios unified version)

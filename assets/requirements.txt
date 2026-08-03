@@ -35,7 +35,7 @@ publicsuffixlist==0.9.4
 pycparser==3.0
 pydig==0.4.0
 pydyf==0.10.0
-PyJWT==1.7.1
+PyJWT==2.13.0
 pymisp==2.4.165.1
 pyOpenSSL==23.2.0
 pyzipper==0.3.6
@@ -49,7 +49,7 @@ referencing==0.37.0
 requests==2.33.1
 rpds-py==0.30.0
 six==1.16.0
-SQLAlchemy==1.4.44
+SQLAlchemy==2.0.51
 tinycss2==1.5.1
 typing_extensions==4.15.0
 urllib3==2.6.3

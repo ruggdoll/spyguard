@@ -34,8 +34,8 @@ def get_token():
     """
         Return the JWT token for API requests.
     """
-    token = jwt.encode({"exp": datetime.datetime.now() + datetime.timedelta(hours=24)}, app.config["SECRET_KEY"])
-    return jsonify({ "token": token.decode("utf8") if type(token) == bytes else token })
+    token = jwt.encode({"exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)}, app.config["SECRET_KEY"], algorithm="HS256")
+    return jsonify({"token": token})
 
 @app.route("/<p>/<path:path>", methods=["GET"])
 @auth.login_required

@@ -1,4 +1,7 @@
+from sqlalchemy.orm import registry
 from app import db
+
+_mapper_registry = registry()
 
 
 class Ioc(db.Model):
@@ -29,6 +32,6 @@ class MISPInst(db.Model):
         self.last_sync = last_sync
 
 
-db.mapper(Whitelist, db.Table('whitelist', db.metadata, autoload=True))
-db.mapper(Ioc, db.Table('iocs', db.metadata, autoload=True))
-db.mapper(MISPInst, db.Table('misp', db.metadata, autoload=True))
+_mapper_registry.map_imperatively(Whitelist, db.Table('whitelist', db.metadata, autoload_with=db.engine))
+_mapper_registry.map_imperatively(Ioc, db.Table('iocs', db.metadata, autoload_with=db.engine))
+_mapper_registry.map_imperatively(MISPInst, db.Table('misp', db.metadata, autoload_with=db.engine))

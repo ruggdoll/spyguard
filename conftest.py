@@ -115,7 +115,7 @@ import pytest
 
 from main import app as _flask_app
 
-TEST_SECRET = b"spyguard-pytest-secret"
+TEST_SECRET = b"spyguard-pytest-secret-key-32byt"
 _flask_app.config["TESTING"] = True
 _flask_app.config["SECRET_KEY"] = TEST_SECRET
 
@@ -125,9 +125,8 @@ _flask_app.config["SECRET_KEY"] = TEST_SECRET
 # ---------------------------------------------------------------------------
 
 def _make_token() -> str:
-    payload = {"exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)}
-    token = jwt.encode(payload, TEST_SECRET)
-    return token.decode("utf-8") if isinstance(token, bytes) else token
+    payload = {"exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)}
+    return jwt.encode(payload, TEST_SECRET, algorithm="HS256")
 
 
 @pytest.fixture
