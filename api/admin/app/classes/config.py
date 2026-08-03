@@ -12,6 +12,8 @@ from functools import reduce
 from flask import send_file
 from typing import Any, Dict, Iterable, Tuple
 
+from app.utils import CONFIG_PATH
+
 
 class Config(object):
     def __init__(self):
@@ -19,7 +21,7 @@ class Config(object):
         return None
 
     def _config_path(self) -> str:
-        return os.path.join(self.dir, "config.yaml")
+        return CONFIG_PATH
 
     def _load_config(self) -> Dict[str, Any]:
         """Load config.yaml; return {} if missing/empty/invalid."""

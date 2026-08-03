@@ -8,8 +8,8 @@ from functools import reduce
 from typing import Any, Iterable, Iterator
 
 
-CONFIG_PATH = "/usr/share/spyguard/config.yaml"
-WATCHERS_PATH = "/usr/share/spyguard/watchers.yaml"
+CONFIG_PATH = os.environ.get("SPYGUARD_CONFIG_PATH", "/usr/share/spyguard/config.yaml")
+WATCHERS_PATH = os.environ.get("SPYGUARD_WATCHERS_PATH", "/usr/share/spyguard/watchers.yaml")
 
 
 def read_config(path: Iterable[str], default: Any = None) -> Any:

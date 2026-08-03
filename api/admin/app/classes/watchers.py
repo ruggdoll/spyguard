@@ -10,10 +10,11 @@ import yaml
 from markupsafe import escape
 from sqlalchemy.sql import exists
 
+from app.utils import WATCHERS_PATH
+
 
 class Watcher(object):
     def __init__(self):
-        self.dir = "/".join(sys.path[0].split("/")[:-2])
         self.watchers = [w for w in self.get_watchers()]
         return None
 
@@ -64,23 +65,20 @@ class Watcher(object):
             bool: True if successful
         """
         try:
-            dir = "/".join(sys.path[0].split("/")[:-2])
-            watchers = yaml.load(open(os.path.join(dir, "watchers.yaml"), "r"), Loader=yaml.SafeLoader)
-            with open(os.path.join(dir, "watchers.yaml"), "w") as yaml_file:
-                yaml_file.write(yaml.dump({ "watchers" : self.watchers }, default_flow_style=False))
-                return True
-        except:
+            with open(WATCHERS_PATH, "w") as yaml_file:
+                yaml_file.write(yaml.dump({"watchers": self.watchers}, default_flow_style=False))
+            return True
+        except Exception:
             return False
 
     def get_watchers(self) -> Iterator[list]:
-        """Get the watcher instances from the yaml 
+        """Get the watcher instances from the yaml
         watchers file
 
         Yields:
             Iterator[list]: watchers list
         """
-        dir = "/".join(sys.path[0].split("/")[:-2])
-        watchers = yaml.load(open(os.path.join(dir, "watchers.yaml"), "r"), Loader=yaml.SafeLoader)
+        watchers = yaml.load(open(WATCHERS_PATH, "r"), Loader=yaml.SafeLoader)
         for watcher in watchers["watchers"]:
             yield watcher
 

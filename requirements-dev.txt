@@ -1,0 +1,2 @@
+# Development and test dependencies — not needed in production.
+pytest==8.3.5
