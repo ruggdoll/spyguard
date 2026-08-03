@@ -81,7 +81,7 @@ create_directory() {
 generate_certificate() {
     # Generating SSL certificate for the backend.
     echo -e "[+] Generating SSL certificate for the backend"
-    openssl req -x509 -subj '/CN=spyguard.local/O=Spyguard Backend' -newkey rsa:4096 -nodes -keyout /usr/share/spyguard/server/backend/key.pem -out /usr/share/spyguard/server/backend/cert.pem -days 3650
+    openssl req -x509 -subj '/CN=spyguard.local/O=Spyguard Backend' -newkey rsa:4096 -nodes -keyout /usr/share/spyguard/api/admin/key.pem -out /usr/share/spyguard/api/admin/cert.pem -days 3650
 }
 
 create_services() {
@@ -95,7 +95,7 @@ Description=Spyguard frontend service
 
 [Service]
 Type=simple
-ExecStart=/usr/share/spyguard/spyguard-venv/bin/python3 /usr/share/spyguard/server/frontend/main.py
+ExecStart=/usr/share/spyguard/spyguard-venv/bin/python3 /usr/share/spyguard/api/capture/main.py
 Restart=on-abort
 KillMode=process
 
@@ -110,7 +110,7 @@ Description=Spyguard backend service
 
 [Service]
 Type=simple
-ExecStart=/usr/share/spyguard/spyguard-venv/bin/python3 /usr/share/spyguard/server/backend/main.py
+ExecStart=/usr/share/spyguard/spyguard-venv/bin/python3 /usr/share/spyguard/api/admin/main.py
 Restart=on-abort
 KillMode=process
 
@@ -127,7 +127,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/share/spyguard/spyguard-venv/bin/python3 /usr/share/spyguard/server/backend/watchers.py
+ExecStart=/usr/share/spyguard/spyguard-venv/bin/python3 /usr/share/spyguard/api/admin/watchers.py
 Restart=on-abort
 KillMode=process
 
@@ -235,7 +235,7 @@ create_database() {
 
 feeding_iocs() {
     echo -e "\e[39m[+] Feeding your SpyGuard instance with fresh IOCs and whitelist, please wait."
-    python3 /usr/share/spyguard/server/backend/watchers.py 2>/dev/null
+    python3 /usr/share/spyguard/api/admin/watchers.py 2>/dev/null
 
     # Then, let's activate watchers service
     systemctl start spyguard-watchers

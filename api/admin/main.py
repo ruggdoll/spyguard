@@ -17,7 +17,7 @@ import jwt
 from app.utils import read_config
 from sys import path
 
-app = Flask(__name__, template_folder="../../app/backend/dist")
+app = Flask(__name__, template_folder="../../ui/admin/dist")
 app.config["SECRET_KEY"] = secrets.token_bytes(32)
 
 @app.route("/", methods=["GET"])
@@ -43,7 +43,7 @@ def get_file(p, path):
     """
         Return the backend assets (css, js files, fonts etc.)
     """
-    rp = "../../app/backend/dist/{}".format(p)
+    rp = "../../ui/admin/dist/{}".format(p)
     return send_from_directory(rp, path) if p in ["assets", "css", "fonts", "js", "img"] else redirect("/")
 
 @app.errorhandler(404)

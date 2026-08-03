@@ -10,8 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `CLAUDE.md` — developer guide documenting architecture, setup, conventions, and detection flow
 - `CHANGELOG.md` — this file, tracking structural improvements
 
+### Changed
+- Renamed `app/backend/` → `ui/admin/`, `app/frontend/` → `ui/capture/` — clarifies these are Vue UIs, not Flask backends
+- Renamed `server/backend/` → `api/admin/`, `server/frontend/` → `api/capture/` — unambiguous pairing with the UIs they serve
+- Updated all path references in `install.sh`, `update.sh`, `api/admin/main.py`, `api/capture/main.py`, `analysis/analysis.py`
+
 ### Planned
-- Rename `app/` and `server/` directories to clarify admin vs capture split
 - Fix HTTP verbs: GET → PATCH/PUT for all state-mutating routes
 - Update and harmonize Python/JS dependencies (PyJWT 2.x, SQLAlchemy 2.0, axios unified version)
 - Split `analysis/classes/engine.py` (2361 lines) into focused sub-modules

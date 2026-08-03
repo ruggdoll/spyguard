@@ -11,7 +11,7 @@ from app.blueprints.misc import misc_bp
 from app.utils import read_config
 from app.spyguard_logging import get_logger
 
-app = Flask(__name__, template_folder="/usr/share/spyguard/app/frontend/dist")
+app = Flask(__name__, template_folder="/usr/share/spyguard/ui/capture/dist")
 log = get_logger()
 
 @app.route("/", methods=["GET"])
@@ -26,7 +26,7 @@ def get_file(p, path):
     """
         Return the frontend assets (css, js files, fonts etc.)
     """
-    rp = "/usr/share/spyguard/app/frontend/dist/{}".format(p)
+    rp = "/usr/share/spyguard/ui/capture/dist/{}".format(p)
     return send_from_directory(rp, path) if p in ["assets", "css", "fonts", "js", "img"] else redirect("/")
 
 @app.errorhandler(404)

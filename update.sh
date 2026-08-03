@@ -55,29 +55,29 @@ elif [[ "$PWD" == "/tmp/spyguard" ]]; then
     fi
 
     echo "[+] Saving SpyGuard backend's SSL configuration in /tmp/"
-    if compgen -G "/usr/share/spyguard/server/backend/*.pem" > /dev/null; then
-        mv /usr/share/spyguard/server/backend/*.pem "$BACKUP_DIR/" || die "Failed to backup backend PEM files"
+    if compgen -G "/usr/share/spyguard/api/admin/*.pem" > /dev/null; then
+        mv /usr/share/spyguard/api/admin/*.pem "$BACKUP_DIR/" || die "Failed to backup backend PEM files"
     fi
 
     echo "[+] Deleting the current SpyGuard folders and files."
-    [[ -d /usr/share/spyguard/app ]] && rm -rf /usr/share/spyguard/app/
+    [[ -d /usr/share/spyguard/ui ]] && rm -rf /usr/share/spyguard/ui/
     [[ -d /usr/share/spyguard/spyguard-venv ]] && rm -rf /usr/share/spyguard/spyguard-venv/
-    [[ -d /usr/share/spyguard/server ]] && rm -rf /usr/share/spyguard/server/
+    [[ -d /usr/share/spyguard/api ]] && rm -rf /usr/share/spyguard/api/
     [[ -d /usr/share/spyguard/analysis ]] && rm -rf /usr/share/spyguard/analysis/
     [[ -f /usr/share/spyguard/update.sh ]] && rm /usr/share/spyguard/update.sh
     [[ -f /usr/share/spyguard/uninstall.sh ]] && rm /usr/share/spyguard/uninstall.sh
 
     echo "[+] Copying the new SpyGuard version"
     mkdir -p /usr/share/spyguard
-    cp -R /tmp/spyguard/app /usr/share/spyguard/app || die "Failed copying app/"
-    cp -R /tmp/spyguard/server /usr/share/spyguard/server || die "Failed copying server/"
+    cp -R /tmp/spyguard/ui /usr/share/spyguard/ui || die "Failed copying ui/"
+    cp -R /tmp/spyguard/api /usr/share/spyguard/api || die "Failed copying api/"
     cp -R /tmp/spyguard/analysis /usr/share/spyguard/analysis || die "Failed copying analysis/"
     cp /tmp/spyguard/update.sh /usr/share/spyguard/update.sh || die "Failed copying update.sh"
     cp /tmp/spyguard/uninstall.sh /usr/share/spyguard/uninstall.sh || die "Failed copying uninstall.sh"
 
     echo "[+] Retoring the backend's SSL configuration from /tmp/"
     if compgen -G "$BACKUP_DIR/*.pem" > /dev/null; then
-        mv "$BACKUP_DIR"/*.pem /usr/share/spyguard/server/backend/ || die "Failed restoring backend PEM files"
+        mv "$BACKUP_DIR"/*.pem /usr/share/spyguard/api/admin/ || die "Failed restoring backend PEM files"
     fi
     if [[ -f "$BACKUP_DIR/config.yaml" ]]; then
       cp -f "$BACKUP_DIR/config.yaml" /usr/share/spyguard/config.yaml || die "Failed restoring config.yaml"

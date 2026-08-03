@@ -14,20 +14,15 @@ The project has two independent Flask services and two Vue 3 UIs:
 
 ```
 spyguard/
-├── app/
-│   ├── backend/      # Vue 3 UI — admin/management panel (port 4201 in dev)
-│   └── frontend/     # Vue 3 UI — capture & analysis workflow (port 4202 in dev)
-├── server/
-│   ├── backend/      # Flask API — admin endpoints, JWT auth (port 8443, HTTPS)
-│   └── frontend/     # Flask API — capture/analysis endpoints (port 8000, HTTP)
+├── ui/
+│   ├── admin/        # Vue 3 UI — admin/management panel (port 4201 in dev)
+│   └── capture/      # Vue 3 UI — capture & analysis workflow (port 4202 in dev)
+├── api/
+│   ├── admin/        # Flask API — admin endpoints, JWT auth (port 8443, HTTPS)
+│   └── capture/      # Flask API — capture/analysis endpoints (port 8000, HTTP)
 ├── analysis/         # Detection engine (Suricata, IOC matching, heuristics, JARM)
 └── assets/           # Static data: iocs.json, whitelist.json, scheme.sql, requirements.txt
 ```
-
-> **Naming note:** The `app/backend` / `server/backend` pair manages SpyGuard's own
-> configuration (admin UI + admin API). The `app/frontend` / `server/frontend` pair is
-> what the end-user sees during a capture session (user UI + capture API). The naming
-> is confusing and will be corrected — see CHANGELOG.md.
 
 ### Ports
 
@@ -52,7 +47,7 @@ are created: `spyguard-backend`, `spyguard-frontend`, `spyguard-watchers`.
 | `analysis/classes/engine.py` | Core detection logic (Suricata, IOC matching, heuristics, DNS, JARM) |
 | `analysis/classes/report.py` | PDF report generation via weasyprint |
 | `server/backend/app/db/models.py` | SQLAlchemy ORM models |
-| `server/backend/app/decorators.py` | Flask auth decorators (Basic + JWT) |
+| `api/admin/app/decorators.py` | Flask auth decorators (Basic + JWT) |
 | `install.sh` | Full install script (Debian only, requires root) |
 
 ## Development Setup
@@ -72,20 +67,20 @@ source spyguard-venv/bin/activate
 pip install -r assets/requirements.txt
 
 # Admin API
-python server/backend/main.py
+python api/admin/main.py
 
 # Capture API
-python server/frontend/main.py
+python api/capture/main.py
 ```
 
 ### Vue frontends (dev mode)
 
 ```bash
 # Admin UI (proxies to https://localhost:5000 by default in dev)
-cd app/backend && npm install && npm run dev
+cd ui/admin && npm install && npm run dev
 
 # Capture UI (proxies to http://localhost:8040 by default in dev)
-cd app/frontend && npm install && npm run dev
+cd ui/capture && npm install && npm run dev
 ```
 
 ### Linting
@@ -94,8 +89,8 @@ cd app/frontend && npm install && npm run dev
 # Python — no linter configured yet (TODO)
 
 # Vue
-cd app/backend && npm run lint
-cd app/frontend && npm run lint
+cd ui/admin && npm run lint
+cd ui/capture && npm run lint
 ```
 
 ## Dependency Constraints

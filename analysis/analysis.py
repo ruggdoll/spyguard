@@ -8,7 +8,7 @@ import json
 import os
 import traceback
 import sys as _sys
-_sys.path.insert(0, "/usr/share/spyguard/server/frontend")
+_sys.path.insert(0, "/usr/share/spyguard/api/capture")
 from app.spyguard_logging import get_logger
 
 """
