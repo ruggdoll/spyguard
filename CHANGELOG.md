@@ -62,6 +62,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Remaining 4 xfail: "GET on mutation route should return 405" — masked by the `GET /<p>/<path:path>`
 catch-all in `api/admin/main.py` which intercepts before Flask can return 405.
 
+### Task 5 — Découper engine.py (2361 lignes) en modules
+
+#### Objectif
+`analysis/classes/engine.py` faisait 2361 lignes et mêlait initialisation, logique TLS,
+enrichissement DNS/WHOIS, et orchestration. Divisé en 3 modules par rôle, sans changer
+aucun comportement observable.
+
+#### Fichiers créés
+- `analysis/classes/engine_types.py` (275 lignes) — Types partagés : 3 fonctions module-level
+  (`_whitelist_asn_elements_to_int_set`, `_iter_domain_suffixes`, `_normalize_dn`) et les
+  dataclasses/classes `EngineConfig`, `WhitelistIndex`, `IOCIndex`.
+- `analysis/classes/engine_tls.py` (511 lignes) — `EngineTLSMixin` : 17 méthodes TLS/SSL
+  (`active_check_ssl`, `check_tls`, `_precheck_active_ssl`, helpers cert/SNI, etc.).
+- `analysis/classes/engine_dns.py` (731 lignes) — `EngineDNSMixin` : 15 méthodes DNS/domaine
+  (`check_domains`, `check_dnsname`, `check_http`, `_prefetch_domain_enrichments`,
+  `_check_umbrella_popularity`, `_ipthc_first_domain`, etc.).
+
+#### Fichier modifié
+- `analysis/classes/engine.py` (900 lignes) — Réduit à `class Engine(EngineTLSMixin, EngineDNSMixin):`
+  avec uniquement les méthodes non déléguées : `__init__`, `start_engine`, `parse_eve_file`,
+  `check_flow`, `check_whitelist`, `get_alerts`, `get_tor_nodes`, et les helpers d'orchestration.
+  Imports nettoyés (suppression de `subprocess`, `ssl`, `socket`, `OpenSSL`, `pydig`, `whois`,
+  `publicsuffix2`, `get_jarm` qui sont dans les mixins).
+
+#### Vérification
+```
+MRO: ['Engine', 'EngineTLSMixin', 'EngineDNSMixin', 'object']
+20 passed, 4 xfailed
+```
+
 ### Task 6 — Migrer l'appel analysis de subprocess vers import Python direct
 
 #### Problème
@@ -113,6 +143,103 @@ basé sur `sys.path[0]`.
 ```
 20 passed, 4 xfailed, 0 warnings
 ```
+
+### Fix catch-all route masking 405 responses
+
+#### Problem
+`api/admin/main.py` registered `GET /<p>/<path:path>` (static asset serving) before the API
+blueprints. Any GET request to an API path whose blueprint only accepts DELETE/PATCH was
+intercepted by the catch-all and returned 401 (auth gate) instead of 405 Method Not Allowed.
+This masked the 4 xfailed tests from task 9.
+
+#### Fix
+Replaced the bare `<p>` segment with a custom Werkzeug converter `_AssetFolderConverter`
+whose regex only matches the known asset folders (`assets|css|fonts|js|img`). The pattern
+`/<asset_folder:p>/<path:path>` never fires for `/api/…` URLs, so Flask's URL map now
+correctly returns 405 for GET requests on DELETE/PATCH-only blueprint routes.
+
+Removed the `@pytest.mark.xfail` markers from the 4 tests that now pass cleanly.
+
+#### Test results
+```
+84 passed, 0 xfailed
+```
+
+### Task 7 — Compléter la suite de tests (vitest + couverture engine)
+
+#### Python — nouveaux fichiers de tests
+
+- `tests/api/admin/test_misp.py` (8 tests) — Auth, get-all, add (mock PyMISP), add failure,
+  add duplicate, delete nonexistent, delete existing.
+- `tests/api/admin/test_watchers.py` (7 tests) — Auth, get-all, add, duplicate rejection,
+  delete. Fixture `clean_watchers` (autouse) resets le singleton `watcher.watchers` et le
+  fichier YAML après chaque test.
+- `tests/api/admin/test_update.py` (7 tests) — Version publique, auth, check (mock
+  `requests.get` avec réponse GitHub-like), update-to-date, erreur réseau, process (mock
+  `subprocess.Popen`).
+- `tests/analysis/__init__.py` + `tests/analysis/conftest.py` — Injecte `analysis/` dans
+  `sys.path` pour les imports directs sans chemin d'installation.
+- `tests/analysis/test_engine_types.py` (36 tests) — Couvre `_iter_domain_suffixes`,
+  `_normalize_dn`, `_whitelist_asn_elements_to_int_set`, `WhitelistIndex`, `IOCIndex`.
+
+#### JavaScript — vitest pour le panneau admin
+
+- `ui/admin/package.json` — ajout `vitest`, `@vue/test-utils`, `happy-dom` en devDependencies ;
+  scripts `test` et `test:watch`.
+- `ui/admin/vite.config.js` — bloc `test: { environment: 'happy-dom', globals: true }`.
+- `ui/admin/src/tests/iocs-manage.test.js` (5 tests) — Monte le composant, vérifie l'état
+  initial des onglets, `switch_tab`, validation `type_tag_error`, appel `axios.post`.
+- `ui/admin/src/tests/edit-configuration.test.js` (2 tests) — Teste les méthodes
+  `switch_config` et `change_spyguard_server` directement sans monter le template
+  (le template nécessite un objet `config` complet) via `Component.methods.fn.call({…})`.
+
+#### CI/CD
+
+- `.github/workflows/ci.yml` — deux jobs : `python-tests` (pytest sur Python 3.12) et
+  `vue-admin-tests` (vitest sur Node 20), déclenchés sur push/PR vers `main`/`master`.
+
+#### Test results
+```
+84 passed, 0 xfailed  (pytest)
+2 test files, 7 tests  (vitest)
+```
+
+### Task 8 — Environnement Docker pour le développement
+
+#### Fichiers créés
+
+- `docker-compose.dev.yml` — 4 services :
+  - `admin-api` (toujours actif) : Flask admin sur le port 8443 en HTTP (pas de TLS en dev).
+  - `admin-ui` (toujours actif) : Vite dev server sur le port 4201 avec hot-reload.
+  - `capture-api` (profil `capture`) : Flask capture sur le port 8000. Nécessite
+    `--network host` + `CAP_NET_RAW` pour le vrai WiFi ; l'API démarre sans eux.
+  - `capture-ui` (profil `capture`) : Vite dev server sur le port 4202.
+- `docker/dev-config.yaml` — Config de développement : `remote_access: false` (HTTP),
+  identifiants `admin` / `spyguard`.
+- `docker/admin-api/Dockerfile` + `entrypoint.sh` — Python 3.12-slim, installe
+  `requirements.txt`, initialise le schéma SQLite au premier démarrage.
+- `docker/capture-api/Dockerfile` + `entrypoint.sh` — Idem + `libudev-dev` pour `pyudev`.
+- `docker/admin-ui/Dockerfile` — Node 20-slim, `npm ci` ; source montée en volume pour le
+  hot-reload (node_modules reste dans l'image).
+- `docker/capture-ui/Dockerfile` — Idem pour le Capture UI.
+- `.dockerignore` — Exclut `.venv/`, `node_modules/`, `dist/`, `*.sqlite3`, `.git/`.
+
+#### Fichiers modifiés
+
+- `ui/admin/vite.config.js` — cible du proxy lisible via `SPYGUARD_ADMIN_API_URL`
+  (défaut : `https://localhost:5000` pour le dev local hors Docker).
+- `ui/capture/vite.config.js` — idem avec `SPYGUARD_CAPTURE_API_URL`
+  (défaut : `http://localhost:8040`).
+
+#### Usage
+```bash
+# Admin seulement (cas le plus courant)
+docker compose -f docker-compose.dev.yml up --build
+
+# Tout inclus (capture nécessite host network + privilèges)
+docker compose -f docker-compose.dev.yml --profile capture up --build
+```
+Accès : `http://localhost:4201` — login `admin` / `spyguard`.
 
 ### Planned
 - Fix HTTP verbs: GET → PATCH/PUT for all state-mutating routes (DONE — task 9)
