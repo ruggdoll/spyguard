@@ -1,0 +1,68 @@
+services:
+
+  # ── Admin API (Flask, port 8443 plain HTTP in dev) ──────────────────────────
+  admin-api:
+    build:
+      context: .
+      dockerfile: docker/admin-api/Dockerfile
+    ports:
+      - "8443:8443"
+    environment:
+      SPYGUARD_CONFIG_PATH: /app/docker/dev-config.yaml
+      SPYGUARD_WATCHERS_PATH: /app/watchers.yaml
+      SPYGUARD_DB_URL: sqlite:////app/database.sqlite3
+      SPYGUARD_DB_FILE: /app/database.sqlite3
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+  # ── Admin UI (Vite dev server, port 4201, hot-reload) ───────────────────────
+  admin-ui:
+    build:
+      context: .
+      dockerfile: docker/admin-ui/Dockerfile
+    ports:
+      - "4201:4201"
+    environment:
+      SPYGUARD_ADMIN_API_URL: http://admin-api:8443
+    volumes:
+      - ./ui/admin:/app        # source code (hot-reload)
+      - /app/node_modules      # keep node_modules from image, don't shadow with host
+    depends_on:
+      - admin-api
+    restart: unless-stopped
+
+  # ── Capture API (Flask, port 8000) ──────────────────────────────────────────
+  # Profile "capture": opt-in, requires host networking for WiFi capture.
+  # Start with: docker compose -f docker-compose.dev.yml --profile capture up
+  # Note: tshark / suricata / nmcli won't work inside Docker without
+  #       --network host and CAP_NET_RAW; the API will start but capture fails.
+  capture-api:
+    build:
+      context: .
+      dockerfile: docker/capture-api/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/usr/share/spyguard
+    profiles:
+      - capture
+    restart: unless-stopped
+
+  # ── Capture UI (Vite dev server, port 4202, hot-reload) ─────────────────────
+  capture-ui:
+    build:
+      context: .
+      dockerfile: docker/capture-ui/Dockerfile
+    ports:
+      - "4202:4202"
+    environment:
+      SPYGUARD_CAPTURE_API_URL: http://capture-api:8000
+    volumes:
+      - ./ui/capture:/app      # source code (hot-reload)
+      - /app/node_modules      # keep node_modules from image
+    profiles:
+      - capture
+    depends_on:
+      - capture-api
+    restart: unless-stopped

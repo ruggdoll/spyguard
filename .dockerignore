@@ -1,0 +1,12 @@
+.git/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+ui/admin/node_modules/
+ui/capture/node_modules/
+ui/admin/dist/
+ui/capture/dist/
+tests/
+*.sqlite3

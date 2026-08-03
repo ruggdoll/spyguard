@@ -16,7 +16,7 @@ export default defineConfig({
     port: 4202,
     proxy: {
       '^/api': {
-        target: 'http://localhost:8040',
+        target: process.env.SPYGUARD_CAPTURE_API_URL || 'http://localhost:8040',
         changeOrigin: true,
         ws: true,
       },

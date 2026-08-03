@@ -1,0 +1,56 @@
+analysis:
+  active: true
+  heuristics: true
+  http_default_ports:
+  - 80
+  indicators_types:
+  - all
+  iocs: true
+  max_ports: 1024
+  remote: false
+  tls_default_ports:
+  - 443
+  - 465
+  - 636
+  - 989
+  - 990
+  - 993
+  - 995
+  - 5223
+  whitelist: true
+backend:
+  # Login: admin / Password: spyguard
+  login: admin
+  password: e68d10f18ace7013e397d3745306b09e03bc11c5162aa608ad22a4f51b55e086
+  # false → plain HTTP on 8443, no TLS cert required
+  remote_access: false
+frontend:
+  backend_option: true
+  capture_export: server
+  download_links: false
+  http_port: 8000
+  remote_access: false
+  shutdown_option: false
+  slideshow: false
+  sparklines: true
+  spyguard_server: https://spyguard.net
+  ui_zoom: 100
+  update: false
+  user_lang: en
+  virtual_keyboard: false
+network:
+  in: wlan0
+  internet_check: https://example.net
+  out: lo
+  ssids: []
+  tokenized_ssids: false
+project:
+  path: /app
+  tags_url: https://api.github.com/repos/SpyGuard/spyguard/tags
+watchers:
+- name: SpyGuard IOCs repository
+  type: iocs
+  url: https://raw.githubusercontent.com/SpyGuard/spyguard/master/assets/iocs.json
+- name: SpyGuard whitelist
+  type: whitelist
+  url: https://raw.githubusercontent.com/SpyGuard/spyguard/master/assets/whitelist.json
