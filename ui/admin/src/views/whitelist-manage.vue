@@ -119,9 +119,9 @@ export default {
         },
         import_element: function(type, elem) {
             if (elem != "" && elem.slice(0,1)  != "#"){
-                axios.get(`/api/whitelist/add/${type.trim()}/${elem.trim()}`, { 
-                    timeout: 10000, 
-                    headers: { "X-Token" : this.jwt } 
+                axios.post(`/api/whitelist/add_post`, { data: { element: { elem_type: type.trim(), elem_value: elem.trim(), elem_source: 'backend' } } }, {
+                    timeout: 10000,
+                    headers: { "X-Token" : this.jwt }
                 }).then(response => {
                     if(response.data.status){
                         this.imported.push(response.data);

@@ -162,7 +162,7 @@ export default {
                         ioc = ioc.replace(")", "")
                     }
                 }
-                axios.get(`/api/ioc/add/${type.trim()}/${tag.trim()}/${tlp.trim()}/${ioc}`, { timeout: 10000, headers: {'X-Token': this.jwt} })
+                axios.post(`/api/ioc/add_post`, { data: { ioc: { ioc_type: type.trim(), ioc_tag: tag.trim(), ioc_tlp: tlp.trim(), ioc_value: ioc, ioc_source: 'backend' } } }, { timeout: 10000, headers: {'X-Token': this.jwt} })
                 .then(response => {
                     if(response.data.status){
                         this.imported.push(response.data);

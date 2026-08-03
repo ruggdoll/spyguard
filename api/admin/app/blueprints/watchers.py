@@ -21,7 +21,7 @@ def add_instance():
     res = watcher.add_instance(data["data"]["instance"])
     return jsonify(res)
 
-@watchers_bp.route('/delete/<watcher_id>', methods=['GET'])
+@watchers_bp.route('/delete/<watcher_id>', methods=['DELETE'])
 @require_header_token
 def delete_instance(watcher_id):
     """

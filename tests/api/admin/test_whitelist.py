@@ -36,7 +36,6 @@ class TestWhitelistAddWithCorrectVerb:
     The route doesn't exist yet — xfail until task 9 creates it.
     """
 
-    @pytest.mark.xfail(strict=False, reason="POST /whitelist/add_post route doesn't exist yet; add in task 9")
     def test_add_domain_via_post(self, client, auth_headers):
         payload = {"data": {"element": {
             "elem_type": "domain",
@@ -55,13 +54,15 @@ class TestWhitelistDeleteWithCorrectVerb:
     Will pass after task 9.
     """
 
-    @pytest.mark.xfail(strict=False, reason="route uses GET; fix to DELETE in task 9")
+    @pytest.mark.xfail(strict=False, reason=(
+        "GET /<p>/<path:path> catch-all in main.py intercepts before Flask can "
+        "return 405 for the DELETE-only blueprint route"
+    ))
     def test_delete_via_get_returns_405(self, client, auth_headers):
-        """After task 9, GET /delete/<id> should be 405."""
+        """GET /delete/<id> should be 405 Method Not Allowed."""
         r = client.get("/api/whitelist/delete/999", headers=auth_headers)
         assert r.status_code == 405
 
-    @pytest.mark.xfail(strict=False, reason="route uses GET; fix to DELETE in task 9")
     def test_delete_nonexistent_via_delete_returns_404_or_status_false(self, client, auth_headers):
         r = client.delete("/api/whitelist/delete/9999", headers=auth_headers)
         assert r.status_code in (200, 404)

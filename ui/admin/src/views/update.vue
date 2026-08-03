@@ -44,7 +44,7 @@
                 .catch(error => { console.log(error) });
             },
             launch_update: function() {
-                axios.get(`/api/update/process`, { timeout: 60000, headers: { 'X-Token': this.jwt } })
+                axios.post(`/api/update/process`, {}, { timeout: 60000, headers: { 'X-Token': this.jwt } })
                 .then(response => {
                     if(response.data.status) {
                         if(response.data.message == "Update successfully launched"){

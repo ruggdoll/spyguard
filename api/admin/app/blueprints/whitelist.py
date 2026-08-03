@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from flask import Blueprint, jsonify, Response
+from flask import Blueprint, jsonify, Response, request
 from app.decorators import require_header_token, require_get_token
 from app.classes.whitelist import WhiteList
 import json
@@ -10,19 +10,21 @@ whitelist_bp = Blueprint("whitelist", __name__)
 whitelist = WhiteList()
 
 
-@whitelist_bp.route('/add/<elem_type>/<path:elem_value>', methods=['GET'])
+@whitelist_bp.route('/add_post', methods=['POST'])
 @require_header_token
-def add(elem_type, elem_value):
+def add_post():
     """
-        Parse and add an element to be whitelisted.
+        Parse and add an element to be whitelisted via POST body.
         :return: status of the operation in JSON
     """
-    source = "backend"
-    res = whitelist.add(elem_type, elem_value, source)
+    data = request.get_json()
+    element = data["data"]["element"]
+    source = element.get("elem_source", "backend")
+    res = whitelist.add(element["elem_type"], element["elem_value"], source)
     return jsonify(res)
 
 
-@whitelist_bp.route('/delete/<elem_id>', methods=['GET'])
+@whitelist_bp.route('/delete/<elem_id>', methods=['DELETE'])
 @require_header_token
 def delete(elem_id):
     """

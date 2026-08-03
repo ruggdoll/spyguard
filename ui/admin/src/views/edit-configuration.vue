@@ -127,7 +127,7 @@ export default {
         save_capture_export: function() {
             var v = this.config.frontend.capture_export
             if (!v || !['usb', 'browser', 'server'].includes(v)) return
-            axios.get(`/api/config/edit/frontend/capture_export/${v}`, {
+            axios.patch(`/api/config/edit/frontend/capture_export`, { value: v }, {
                 timeout: 10000,
                 headers: { 'X-Token': this.jwt }
             }).then(response => {
@@ -141,7 +141,7 @@ export default {
             }).catch(err => console.log(err))
         },
         switch_config: function(cat, key) {
-            axios.get(`/api/config/switch/${cat}/${key}`, {
+            axios.patch(`/api/config/switch/${cat}/${key}`, {}, {
                     timeout: 10000,
                     headers: { 'X-Token': this.jwt }
                 }).then(response => {
@@ -190,7 +190,7 @@ export default {
                 setTimeout(function () { this.toaster = { show: false } }.bind(this), 2000)
                 return
             }
-            axios.get(`/api/config/edit/frontend/spyguard_server/${encodeURIComponent(u)}`, {
+            axios.patch(`/api/config/edit/frontend/spyguard_server`, { value: u }, {
                 timeout: 10000,
                 headers: { 'X-Token': this.jwt }
             }).then(response => {
@@ -210,7 +210,7 @@ export default {
             z = Math.round(z / 10) * 10
             if (z < 100) z = 100
             if (z > 150) z = 150
-            axios.get(`/api/config/edit/frontend/ui_zoom/${z}`, {
+            axios.patch(`/api/config/edit/frontend/ui_zoom`, { value: z }, {
                 timeout: 10000,
                 headers: { 'X-Token': this.jwt }
             }).then(response => {
@@ -225,7 +225,7 @@ export default {
             }).catch(err => console.log(err))
         },
         change_login: function() {
-            axios.get(`/api/config/edit/backend/login/${this.config.backend.login}`, {
+            axios.patch(`/api/config/edit/backend/login`, { value: this.config.backend.login }, {
                     timeout: 10000,
                     headers: { 'X-Token': this.jwt }
             }).then(response => {
@@ -240,7 +240,7 @@ export default {
             .catch(err => (console.log(err)))
         },
         change_password: function() {
-            axios.get(`/api/config/edit/backend/password/${this.config.backend.password}`, {
+            axios.patch(`/api/config/edit/backend/password`, { value: this.config.backend.password }, {
                     timeout: 10000,
                     headers: { 'X-Token': this.jwt }
                 }).then(response => {

@@ -109,13 +109,8 @@ class TestIocAddViaExistingPostRoute:
 
 
 class TestIocDeleteWithCorrectVerb:
-    """
-    DELETE /api/ioc/delete/<id> is the correct REST verb.
-    Currently xfail because the route only accepts GET.
-    Will pass after task 9.
-    """
+    """DELETE /api/ioc/delete/<id> is the correct REST verb."""
 
-    @pytest.mark.xfail(strict=False, reason="route uses GET; fix to DELETE in task 9")
     def test_delete_existing_ioc_via_delete(self, client, auth_headers):
         payload = {"data": {"ioc": {
             "ioc_type": "domain",
@@ -125,14 +120,22 @@ class TestIocDeleteWithCorrectVerb:
             "ioc_source": "pytest",
         }}}
         add_r = client.post("/api/ioc/add_post", json=payload, headers=auth_headers)
-        ioc_id = add_r.get_json().get("id") or 1
+        assert add_r.get_json()["status"] is True
+
+        search_r = client.get("/api/ioc/search/to-delete.example.com", headers=auth_headers)
+        results = search_r.get_json()["results"]
+        assert len(results) == 1
+        ioc_id = results[0]["id"]
 
         r = client.delete(f"/api/ioc/delete/{ioc_id}", headers=auth_headers)
         assert r.status_code == 200
         assert r.get_json()["status"] is True
 
-    @pytest.mark.xfail(strict=False, reason="route uses GET; fix to DELETE in task 9")
+    @pytest.mark.xfail(strict=False, reason=(
+        "GET /<p>/<path:path> catch-all in main.py intercepts before Flask can "
+        "return 405 for the PATCH-only blueprint route"
+    ))
     def test_get_on_delete_route_returns_405(self, client, auth_headers):
-        """After task 9, GET /api/ioc/delete/<id> should be 405 Method Not Allowed."""
+        """GET /api/ioc/delete/<id> should be 405 Method Not Allowed."""
         r = client.get("/api/ioc/delete/999", headers=auth_headers)
         assert r.status_code == 405

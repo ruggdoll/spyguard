@@ -118,7 +118,7 @@ export default {
         },
         delete_instance(elem)
         {
-            axios.get(`/api/watchers/delete/${elem.id}`, { timeout: 10000, headers: {'X-Token': this.jwt} })
+            axios.delete(`/api/watchers/delete/${elem.id}`, { timeout: 10000, headers: {'X-Token': this.jwt} })
             .then(response => {
                 if(response.data.status){
                     this.instances = this.instances.filter(function(el) { return el != elem; }); 

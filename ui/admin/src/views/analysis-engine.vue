@@ -54,7 +54,7 @@ export default {
     props: {},
     methods: {
         switch_config: function(cat, key) {
-            axios.get(`/api/config/switch/${cat}/${key}`, {
+            axios.patch(`/api/config/switch/${cat}/${key}`, {}, {
                     timeout: 10000,
                     headers: { 'X-Token': this.jwt }
                 }).then(response => {
@@ -114,7 +114,7 @@ export default {
         },
         switch_iocs_types: function(tag) {
             if (this.config.analysis.indicators_types.includes(tag)){
-                axios.get(`/api/config/ioc-type/delete/${tag}`, {
+                axios.delete(`/api/config/ioc-type/${tag}`, {
                         timeout: 10000,
                         headers: { 'X-Token': this.jwt }
                 }).then(response => {
@@ -122,7 +122,7 @@ export default {
                 })
                 .catch(err => (console.log(err)))
             } else {
-                axios.get(`/api/config/ioc-type/add/${tag}`, {
+                axios.post(`/api/config/ioc-type/${tag}`, {}, {
                         timeout: 10000,
                         headers: { 'X-Token': this.jwt }
                 }).then(response => {

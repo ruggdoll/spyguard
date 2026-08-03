@@ -38,13 +38,15 @@ class TestConfigSwitchWithCorrectVerb:
     Will pass after task 9.
     """
 
-    @pytest.mark.xfail(strict=False, reason="route uses GET; fix to PATCH in task 9")
+    @pytest.mark.xfail(strict=False, reason=(
+        "GET /<p>/<path:path> catch-all in main.py intercepts before Flask can "
+        "return 405 for the PATCH-only blueprint route"
+    ))
     def test_switch_via_get_returns_405(self, client, auth_headers):
-        """After task 9, GET /config/switch/... should be 405."""
+        """GET /config/switch/... should be 405 Method Not Allowed."""
         r = client.get("/api/config/switch/analysis/heuristics", headers=auth_headers)
         assert r.status_code == 405
 
-    @pytest.mark.xfail(strict=False, reason="route uses GET; fix to PATCH in task 9")
     def test_switch_via_patch_toggles_value(self, client, auth_headers):
         before = client.get("/api/config/list").get_json()["analysis"]["heuristics"]
         r = client.patch("/api/config/switch/analysis/heuristics", headers=auth_headers)
@@ -61,12 +63,14 @@ class TestConfigEditWithCorrectVerb:
     Will pass after task 9.
     """
 
-    @pytest.mark.xfail(strict=False, reason="route uses GET; fix to PATCH in task 9")
+    @pytest.mark.xfail(strict=False, reason=(
+        "GET /<p>/<path:path> catch-all in main.py intercepts before Flask can "
+        "return 405 for the PATCH-only blueprint route"
+    ))
     def test_edit_via_get_returns_405(self, client, auth_headers):
         r = client.get("/api/config/edit/frontend/ui_zoom/120", headers=auth_headers)
         assert r.status_code == 405
 
-    @pytest.mark.xfail(strict=False, reason="route uses GET; fix to PATCH in task 9")
     def test_edit_via_patch_updates_value(self, client, auth_headers):
         r = client.patch(
             "/api/config/edit/frontend/ui_zoom",

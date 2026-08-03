@@ -12,19 +12,6 @@ ioc_bp = Blueprint("ioc", __name__)
 ioc = IOCs()
 
 
-@ioc_bp.route('/add/<ioc_type>/<ioc_tag>/<ioc_tlp>/<path:ioc_value>', methods=['GET'])
-@require_header_token
-def add(ioc_type, ioc_tag, ioc_tlp, ioc_value):
-    """
-        Parse and add an IOC to the database.
-        :return: status of the operation in JSON
-    """
-    source = "backend"
-    if ioc_type == "snort":
-        ioc_value = unquote("/".join(request.full_path.split("/")[7:]))
-    res = IOCs.add(ioc_type, ioc_tag, ioc_tlp, ioc_value, source)
-    return jsonify(res)
-
 
 @ioc_bp.route('/add_post', methods=['POST'])
 @require_header_token
@@ -40,7 +27,7 @@ def add_post():
     return jsonify(res)
 
 
-@ioc_bp.route('/delete/<ioc_id>', methods=['GET'])
+@ioc_bp.route('/delete/<ioc_id>', methods=['DELETE'])
 @require_header_token
 def delete(ioc_id):
     """

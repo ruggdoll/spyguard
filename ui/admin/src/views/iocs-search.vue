@@ -91,7 +91,7 @@ export default {
             return true;
         },
         remove: function(elem){
-            axios.get(`/api/ioc/delete/${elem.id}`, { timeout: 10000, headers: {'X-Token': this.jwt} })
+            axios.delete(`/api/ioc/delete/${elem.id}`, { timeout: 10000, headers: {'X-Token': this.jwt} })
             .then(response => {
                 if(response.data.status){
                     this.results = this.results.filter(function(el) { return el != elem; }); 

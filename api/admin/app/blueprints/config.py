@@ -11,7 +11,7 @@ config_bp = Blueprint("config", __name__)
 config = Config()
 
 
-@config_bp.route('/switch/<cat>/<key>', methods=['GET'])
+@config_bp.route('/switch/<cat>/<key>', methods=['PATCH'])
 @require_header_token
 def switch(cat, key):
     """Switch the Boolean value of a configuration key.
@@ -40,7 +40,7 @@ def switch(cat, key):
     return jsonify(res)
 
 
-@config_bp.route('/ioc-type/add/<tag>', methods=['GET'])
+@config_bp.route('/ioc-type/<tag>', methods=['POST'])
 @require_header_token
 def ioc_type_add(tag):
     """Add an IOC type - defined via its tag - in the 
@@ -55,7 +55,7 @@ def ioc_type_add(tag):
     return jsonify(config.ioc_type_add(tag))
 
 
-@config_bp.route('/ioc-type/delete/<tag>', methods=['GET'])
+@config_bp.route('/ioc-type/<tag>', methods=['DELETE'])
 @require_header_token
 def ioc_type_delete(tag):
     """Delete an IOC type - defined via its tag - in the 
@@ -70,18 +70,19 @@ def ioc_type_delete(tag):
     return jsonify(config.ioc_type_delete(tag))
 
 
-@config_bp.route('/edit/<cat>/<key>/<path:value>', methods=['GET'])
+@config_bp.route('/edit/<cat>/<key>', methods=['PATCH'])
 @require_header_token
-def edit(cat, key, value):
-    """Edit the string (or array) value of a configuration key.
+def edit(cat, key):
+    """Edit the value of a configuration key.
 
     Args:
         cat (str): configuration category
         key (str): configuration key
-        value (any): configuration value
+        Body JSON: {"value": <new_value>}
     Returns:
         dict: operation status
     """
+    value = (request.get_json() or {}).get("value")
     return jsonify(config.write_config(cat, key, value))
     
 

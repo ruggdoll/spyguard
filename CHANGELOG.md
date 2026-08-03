@@ -34,8 +34,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 15 passed, 9 xfailed (specification for task 9 — HTTP verb fixes)
 ```
 
+### Task 9 — Fix HTTP verbs (GET → correct REST verbs for mutations)
+
+#### Flask blueprints changed
+- `api/admin/app/blueprints/ioc.py` — removed legacy `GET /add/<...>` route; `GET /delete/<id>` → `DELETE /delete/<id>`
+- `api/admin/app/blueprints/whitelist.py` — removed `GET /add/<...>` route; added `POST /add_post`; `GET /delete/<id>` → `DELETE /delete/<id>`
+- `api/admin/app/blueprints/config.py` — `GET /switch/<cat>/<key>` → `PATCH`; `GET /ioc-type/add/<tag>` → `POST /ioc-type/<tag>`; `GET /ioc-type/delete/<tag>` → `DELETE /ioc-type/<tag>`; `GET /edit/<cat>/<key>/<value>` → `PATCH /edit/<cat>/<key>` with JSON body `{"value": ...}`
+- `api/admin/app/blueprints/misp.py` — `GET /delete/<id>` → `DELETE /delete/<id>`
+- `api/admin/app/blueprints/watchers.py` — `GET /delete/<id>` → `DELETE /delete/<id>`
+- `api/admin/app/blueprints/update.py` — `GET /process` → `POST /process`
+
+#### Vue views updated
+- `ui/admin/src/views/iocs-manage.vue` — `axios.get /add/...` → `axios.post /add_post` with JSON body
+- `ui/admin/src/views/iocs-search.vue` — `axios.get /delete/<id>` → `axios.delete`
+- `ui/admin/src/views/whitelist-manage.vue` — `axios.get /add/...` → `axios.post /add_post` with JSON body
+- `ui/admin/src/views/whitelist-search.vue` — `axios.get /delete/<id>` → `axios.delete`
+- `ui/admin/src/views/edit-configuration.vue` — all 6 `axios.get /config/switch` and `/config/edit` calls → `axios.patch` with JSON body
+- `ui/admin/src/views/analysis-engine.vue` — `axios.get /config/switch` → `axios.patch`; `axios.get /ioc-type/add` → `axios.post`; `axios.get /ioc-type/delete` → `axios.delete`
+- `ui/admin/src/views/instance-misp.vue` — `axios.get /misp/delete/<id>` → `axios.delete`
+- `ui/admin/src/views/instance-watchers.vue` — `axios.get /watchers/delete/<id>` → `axios.delete`
+- `ui/admin/src/views/update.vue` — `axios.get /update/process` → `axios.post`
+
+#### Tests after task 9
+```
+20 passed, 4 xfailed
+```
+Remaining 4 xfail: "GET on mutation route should return 405" — masked by the `GET /<p>/<path:path>`
+catch-all in `api/admin/main.py` which intercepts before Flask can return 405.
+
 ### Planned
-- Fix HTTP verbs: GET → PATCH/PUT for all state-mutating routes
+- Fix HTTP verbs: GET → PATCH/PUT for all state-mutating routes (DONE — task 9)
 - Update and harmonize Python/JS dependencies (PyJWT 2.x, SQLAlchemy 2.0, axios unified version)
 - Split `analysis/classes/engine.py` (2361 lines) into focused sub-modules
 - Replace subprocess call to `analysis/analysis.py` with a direct Python import

@@ -21,7 +21,7 @@ def add_instance():
     res = misp.add_instance(data["data"]["instance"])
     return jsonify(res)
 
-@misp_bp.route('/delete/<misp_id>', methods=['GET'])
+@misp_bp.route('/delete/<misp_id>', methods=['DELETE'])
 @require_header_token
 def delete_instance(misp_id):
     """

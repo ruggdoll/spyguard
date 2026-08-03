@@ -18,7 +18,7 @@ def get_version():
     """ Check the current version """
     return jsonify(Update().get_current_version())
 
-@update_bp.route("/process", methods=["GET"])
+@update_bp.route("/process", methods=["POST"])
 @require_header_token
 def process():
     """ Check the presence of new version """
