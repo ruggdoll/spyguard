@@ -1,12 +1,4 @@
-"""Tests for /api/config routes.
-
-Green  (pass now)   : GET /list (public, no auth required).
-Red    (xfail now)  : mutation routes should use PATCH not GET.
-                        GET /switch/<cat>/<key>         → PATCH /switch/<cat>/<key>
-                        GET /edit/<cat>/<key>/<value>   → PATCH /edit/<cat>/<key>
-                        GET /ioc-type/add/<tag>         → POST  /ioc-type/<tag>
-                        GET /ioc-type/delete/<tag>      → DELETE /ioc-type/<tag>
-"""
+"""Tests for /api/config routes."""
 
 import pytest
 
@@ -32,16 +24,7 @@ class TestConfigPublicRoutes:
 
 
 class TestConfigSwitchWithCorrectVerb:
-    """
-    PATCH /api/config/switch/<cat>/<key> is the correct verb for toggling.
-    Currently xfail because the route only accepts GET.
-    Will pass after task 9.
-    """
 
-    @pytest.mark.xfail(strict=False, reason=(
-        "GET /<p>/<path:path> catch-all in main.py intercepts before Flask can "
-        "return 405 for the PATCH-only blueprint route"
-    ))
     def test_switch_via_get_returns_405(self, client, auth_headers):
         """GET /config/switch/... should be 405 Method Not Allowed."""
         r = client.get("/api/config/switch/analysis/heuristics", headers=auth_headers)
@@ -57,18 +40,9 @@ class TestConfigSwitchWithCorrectVerb:
 
 
 class TestConfigEditWithCorrectVerb:
-    """
-    PATCH /api/config/edit/<cat>/<key> is the correct verb for editing a value.
-    Currently xfail because the route only accepts GET.
-    Will pass after task 9.
-    """
 
-    @pytest.mark.xfail(strict=False, reason=(
-        "GET /<p>/<path:path> catch-all in main.py intercepts before Flask can "
-        "return 405 for the PATCH-only blueprint route"
-    ))
     def test_edit_via_get_returns_405(self, client, auth_headers):
-        r = client.get("/api/config/edit/frontend/ui_zoom/120", headers=auth_headers)
+        r = client.get("/api/config/edit/frontend/ui_zoom", headers=auth_headers)
         assert r.status_code == 405
 
     def test_edit_via_patch_updates_value(self, client, auth_headers):

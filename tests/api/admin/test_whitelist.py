@@ -1,11 +1,4 @@
-"""Tests for /api/whitelist routes.
-
-Green  (pass now)   : read-only GET routes — search, get/types.
-Red    (xfail now)  : mutation routes tested with correct REST verbs.
-                      Marked xfail until task 9:
-                        GET /add/<elem_type>/<elem_value> → POST /add_post (new route)
-                        GET /delete/<id>                  → DELETE /delete/<id>
-"""
+"""Tests for /api/whitelist routes."""
 
 import pytest
 
@@ -31,10 +24,6 @@ class TestWhitelistReadOnlyRoutes:
 
 
 class TestWhitelistAddWithCorrectVerb:
-    """
-    POST /api/whitelist/add_post is the correct pattern (mirrors IOC).
-    The route doesn't exist yet — xfail until task 9 creates it.
-    """
 
     def test_add_domain_via_post(self, client, auth_headers):
         payload = {"data": {"element": {
@@ -48,16 +37,7 @@ class TestWhitelistAddWithCorrectVerb:
 
 
 class TestWhitelistDeleteWithCorrectVerb:
-    """
-    DELETE /api/whitelist/delete/<id> is the correct REST verb.
-    Currently xfail because the route only accepts GET.
-    Will pass after task 9.
-    """
 
-    @pytest.mark.xfail(strict=False, reason=(
-        "GET /<p>/<path:path> catch-all in main.py intercepts before Flask can "
-        "return 405 for the DELETE-only blueprint route"
-    ))
     def test_delete_via_get_returns_405(self, client, auth_headers):
         """GET /delete/<id> should be 405 Method Not Allowed."""
         r = client.get("/api/whitelist/delete/999", headers=auth_headers)

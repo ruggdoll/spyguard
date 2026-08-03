@@ -1,11 +1,4 @@
-"""Tests for /api/ioc routes.
-
-Green  (pass now)   : read-only GET routes — search, get/types, get/tags.
-Red    (xfail now)  : mutation routes tested with the *correct* REST verbs.
-                      Marked xfail until task 9 fixes the HTTP verbs:
-                        GET  /add/<...>        → POST  /add_post  (or new POST route)
-                        GET  /delete/<id>      → DELETE /delete/<id>
-"""
+"""Tests for /api/ioc routes."""
 
 import pytest
 
@@ -131,10 +124,6 @@ class TestIocDeleteWithCorrectVerb:
         assert r.status_code == 200
         assert r.get_json()["status"] is True
 
-    @pytest.mark.xfail(strict=False, reason=(
-        "GET /<p>/<path:path> catch-all in main.py intercepts before Flask can "
-        "return 405 for the PATCH-only blueprint route"
-    ))
     def test_get_on_delete_route_returns_405(self, client, auth_headers):
         """GET /api/ioc/delete/<id> should be 405 Method Not Allowed."""
         r = client.get("/api/ioc/delete/999", headers=auth_headers)

@@ -95,6 +95,10 @@ with open(_config_path, "w") as _f:
 with open(_watchers_path, "w") as _f:
     yaml.dump({"watchers": []}, _f)
 
+# VERSION file — required by Update.get_current_version() and check_version()
+with open(os.path.join(_tmp_dir, "VERSION"), "w") as _f:
+    _f.write("2.0")
+
 # ---------------------------------------------------------------------------
 # 4. Add api/admin to sys.path so Flask module imports ("from app import ...")
 #    resolve correctly, mirroring how the service runs in production.

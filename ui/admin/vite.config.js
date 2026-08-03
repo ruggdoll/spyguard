@@ -3,6 +3,10 @@ import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
 
 export default defineConfig({
+  test: {
+    environment: 'happy-dom',
+    globals: true,
+  },
   // Use relative asset paths so `dist/index.html` works when served
   // from a sub-path (or behind a reverse proxy).
   base: './',
@@ -16,7 +20,7 @@ export default defineConfig({
     port: 4201,
     proxy: {
       '^/api': {
-        target: 'https://localhost:5000',
+        target: process.env.SPYGUARD_ADMIN_API_URL || 'https://localhost:5000',
         changeOrigin: true,
         ws: true,
         secure: false,
