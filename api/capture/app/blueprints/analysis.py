@@ -7,8 +7,6 @@ import json
 import sys
 from flask import Blueprint, jsonify
 from app.classes.analysis import Analysis
-import subprocess as sp
-import json
 
 analysis_bp = Blueprint("analysis", __name__)
 

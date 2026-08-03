@@ -455,7 +455,8 @@ class Engine():
         # Load template language
         if not re.match("^[a-z]{2,3}$", self.userlang):
             self.userlang = "en"
-        with open(os.path.join(os.path.dirname(os.path.realpath(sys.argv[0])), "locales/{}.json".format(self.userlang))) as f:
+        _analysis_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        with open(os.path.join(_analysis_dir, "locales/{}.json".format(self.userlang))) as f:
             self.template = json.load(f)["alerts"]
 
         # Health report for external services (shown in UI).

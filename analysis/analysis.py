@@ -8,8 +8,16 @@ import json
 import os
 import traceback
 import sys as _sys
-_sys.path.insert(0, "/usr/share/spyguard/api/capture")
-from app.spyguard_logging import get_logger
+import os as _os
+_capture_dir = _os.path.normpath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "api", "capture"))
+if _capture_dir not in _sys.path:
+    _sys.path.insert(0, _capture_dir)
+try:
+    from app.spyguard_logging import get_logger
+except ImportError:
+    import logging as _logging
+    def get_logger():
+        return _logging.getLogger("spyguard.analysis")
 
 """
     This file is called by the frontend to do the analysis.

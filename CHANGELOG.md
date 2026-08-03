@@ -62,6 +62,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Remaining 4 xfail: "GET on mutation route should return 405" — masked by the `GET /<p>/<path:path>`
 catch-all in `api/admin/main.py` which intercepts before Flask can return 405.
 
+### Task 6 — Migrer l'appel analysis de subprocess vers import Python direct
+
+#### Problème
+`api/capture/app/classes/analysis.py` lançait `sp.Popen([sys.executable, ".../analysis.py", token])`
+— un processus fils séparé, sans retour d'erreur structuré, avec un calcul de chemin fragile
+basé sur `sys.path[0]`.
+
+#### Correctifs prérequis (chemin basé sur `__file__`)
+- `analysis/utils.py` : `sys.argv[0]` → `__file__` pour trouver la racine du projet
+  (chemin vers `database.sqlite3` et `config.yaml`)
+- `analysis/classes/engine.py` : `sys.argv[0]` → `__file__` pour trouver `locales/`
+- `analysis/analysis.py` : chemin hardcodé `/usr/share/spyguard/api/capture` remplacé
+  par un chemin relatif à `__file__`, avec fallback sur `logging.getLogger` si le module
+  de log n'est pas importable
+
+#### Migration
+- `api/capture/app/classes/analysis.py` :
+  - Calcul dynamique de `analysis/` via `__file__` → injection dans `sys.path`
+  - `import analysis as _analysis_module`
+  - `Analysis.start()` : `sp.Popen(cmd)` → `threading.Thread(target=_analysis_module.analyze, daemon=True).start()`
+  - Les exceptions du thread sont capturées et loggées, sans planter le processus Flask
+- `api/capture/app/blueprints/analysis.py` : suppression de l'import `subprocess` inutilisé
+- `api/capture/app/__init__.py` : même migration SQLAlchemy 2.0 que l'admin API
+  (`MetaData(bind=)` supprimé, `convert_unicode` supprimé, `mapper` supprimé)
+
+#### Tests après tâche 6
+```
+20 passed, 4 xfailed, 0 warnings
+```
+
 ### Task 4 — Mise à jour et harmonisation des dépendances
 
 #### Python

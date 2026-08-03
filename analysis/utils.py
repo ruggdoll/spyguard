@@ -10,7 +10,7 @@ import os
 from functools import reduce
 
 # I'm not going to use an ORM for that.
-parent = os.path.split(os.path.dirname(os.path.abspath(sys.argv[0])))[0]
+parent = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
 conn = sqlite3.connect(os.path.join(parent, "database.sqlite3"))
 cursor = conn.cursor()
 
