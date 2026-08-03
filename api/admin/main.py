@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from flask import Flask, render_template, send_from_directory, jsonify, redirect
+from werkzeug.routing import BaseConverter
 from app.decorators import auth
 from app.blueprints.ioc import ioc_bp
 from app.blueprints.whitelist import whitelist_bp
@@ -17,7 +18,12 @@ import jwt
 from app.utils import read_config
 from sys import path
 
+class _AssetFolderConverter(BaseConverter):
+    """Only match the static asset folder names so the catch-all never intercepts /api/."""
+    regex = r'(?:assets|css|fonts|js|img)'
+
 app = Flask(__name__, template_folder="../../ui/admin/dist")
+app.url_map.converters['asset_folder'] = _AssetFolderConverter
 app.config["SECRET_KEY"] = secrets.token_bytes(32)
 
 @app.route("/", methods=["GET"])
@@ -37,14 +43,13 @@ def get_token():
     token = jwt.encode({"exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=24)}, app.config["SECRET_KEY"], algorithm="HS256")
     return jsonify({"token": token})
 
-@app.route("/<p>/<path:path>", methods=["GET"])
+@app.route("/<asset_folder:p>/<path:path>", methods=["GET"])
 @auth.login_required
 def get_file(p, path):
     """
         Return the backend assets (css, js files, fonts etc.)
     """
-    rp = "../../ui/admin/dist/{}".format(p)
-    return send_from_directory(rp, path) if p in ["assets", "css", "fonts", "js", "img"] else redirect("/")
+    return send_from_directory("../../ui/admin/dist/{}".format(p), path)
 
 @app.errorhandler(404)
 def page_not_found(e):
