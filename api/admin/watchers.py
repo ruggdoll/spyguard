@@ -22,8 +22,20 @@ from multiprocessing import Process
 UMBRELLA_TOP1M_ZIP_URL = "https://s3-us-west-1.amazonaws.com/umbrella-static/top-1m.csv.zip"
 UMBRELLA_JSON_PATH = "/usr/share/spyguard/assets/umbrella-top-1m.json"
 
-IP2ASN_V4_TSV_GZ_URL = "https://iptoasn.com/data/ip2asn-v4.tsv.gz"
+import csv
+import datetime
+import gzip as _gzip
+
+# iptoasn.com is behind Cloudflare and blocks automated downloads.
+# db-ip.com provides the same data (ip_start,ip_end,asn,org) under CC-BY 4.0.
+_DBIP_ASN_TEMPLATE = "https://download.db-ip.com/free/dbip-asn-lite-{year}-{month:02d}.csv.gz"
 IP2ASN_V4_TSV_GZ_PATH = "/usr/share/spyguard/assets/ip2asn-v4.tsv.gz"
+
+
+def _dbip_asn_url() -> str:
+    """Return the URL for this month's db-ip ASN lite file."""
+    now = datetime.date.today()
+    return _DBIP_ASN_TEMPLATE.format(year=now.year, month=now.month)
 
 
 def download_umbrella_top1m_json():
@@ -62,15 +74,32 @@ def download_umbrella_top1m_json():
 
 
 def download_ip2asn_v4_tsv_gz():
-    """Fetch ip2asn IPv4 TSV (gzip) for offline ASN lookups during analysis."""
-    r = requests.get(IP2ASN_V4_TSV_GZ_URL, timeout=600, stream=True)
+    """Fetch db-ip.com ASN lite (CSV) and convert to iptoasn-compatible TSV.gz.
+
+    db-ip.com format: ip_start,ip_end,asn,"org"
+    Output TSV format: ip_start\tip_end\tasn\t\torg  (5 columns, country left blank)
+    """
+    url = _dbip_asn_url()
+    r = requests.get(url, timeout=600, stream=True,
+                     headers={"User-Agent": "SpyGuard/2.0 (https://github.com/SpyGuard)"})
     r.raise_for_status()
+    raw_gz = io.BytesIO()
+    for chunk in r.iter_content(chunk_size=1024 * 1024):
+        if chunk:
+            raw_gz.write(chunk)
+    raw_gz.seek(0)
+
     os.makedirs(os.path.dirname(IP2ASN_V4_TSV_GZ_PATH), exist_ok=True)
     tmp = IP2ASN_V4_TSV_GZ_PATH + ".part"
-    with open(tmp, "wb") as out:
-        for chunk in r.iter_content(chunk_size=1024 * 1024):
-            if chunk:
-                out.write(chunk)
+    with _gzip.open(raw_gz, "rt", encoding="utf-8", errors="replace") as src, \
+         _gzip.open(tmp, "wt", encoding="utf-8") as dst:
+        reader = csv.reader(src)
+        for row in reader:
+            if len(row) < 3:
+                continue
+            ip_start, ip_end, asn = row[0].strip(), row[1].strip(), row[2].strip()
+            org = row[3].strip() if len(row) >= 4 else ""
+            dst.write("{}\t{}\t{}\t\t{}\n".format(ip_start, ip_end, asn, org))
     os.replace(tmp, IP2ASN_V4_TSV_GZ_PATH)
 
 
