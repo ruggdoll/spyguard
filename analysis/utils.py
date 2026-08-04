@@ -11,8 +11,7 @@ from functools import reduce
 
 # I'm not going to use an ORM for that.
 parent = os.path.split(os.path.dirname(os.path.abspath(__file__)))[0]
-conn = sqlite3.connect(os.path.join(parent, "database.sqlite3"))
-cursor = conn.cursor()
+_db_path = os.path.join(parent, "database.sqlite3")
 
 
 def get_iocs(ioc_type):
@@ -20,9 +19,11 @@ def get_iocs(ioc_type):
         Get a list of IOCs specified by their type.
         :return: list of IOCs
     """
-    cursor.execute(
-        "SELECT value, tag FROM iocs WHERE type = ? ORDER BY value", (ioc_type,))
-    res = cursor.fetchall()
+    with sqlite3.connect(_db_path) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT value, tag FROM iocs WHERE type = ? ORDER BY value", (ioc_type,))
+        res = cur.fetchall()
     return [[r[0], r[1]] for r in res] if res is not None else []
 
 
@@ -31,9 +32,11 @@ def get_whitelist(elem_type):
         Get a list of whitelisted elements specified by their type.
         :return: list of elements
     """
-    cursor.execute(
-        "SELECT element FROM whitelist WHERE type = ? ORDER BY element", (elem_type,))
-    res = cursor.fetchall()
+    with sqlite3.connect(_db_path) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT element FROM whitelist WHERE type = ? ORDER BY element", (elem_type,))
+        res = cur.fetchall()
     return [r[0] for r in res] if res is not None else []
 
 
