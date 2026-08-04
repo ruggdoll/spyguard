@@ -16,6 +16,7 @@ import datetime
 import secrets
 import jwt
 from app.utils import read_config
+from app import db
 from sys import path
 
 class _AssetFolderConverter(BaseConverter):
@@ -25,6 +26,10 @@ class _AssetFolderConverter(BaseConverter):
 app = Flask(__name__, template_folder="../../ui/admin/dist")
 app.url_map.converters['asset_folder'] = _AssetFolderConverter
 app.config["SECRET_KEY"] = secrets.token_bytes(32)
+
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
 
 @app.route("/", methods=["GET"])
 @auth.login_required

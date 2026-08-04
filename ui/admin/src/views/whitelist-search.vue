@@ -28,7 +28,7 @@
             </div>
             <div v-else-if="first_search==false">
                 <div class="empty">
-                    <p class="empty-title h5">Element<span v-if="this.elements.match(/[^\r\n]+/g).length>1">s</span> not found.</p>
+                    <p class="empty-title h5">Element<span v-if="elements && elements.match(/[^\r\n]+/g) && elements.match(/[^\r\n]+/g).length>1">s</span> not found.</p>
                     <p class="empty-subtitle">Try wildcard search to expend your search.</p>
                 </div>
             </div>
@@ -42,9 +42,10 @@ import axios from 'axios'
 export default {
     name: 'elements-search',   
     data() {
-        return { 
+        return {
             results: [],
-            first_search: true,
+            first_search: false,
+            elements: "",
             jwt:""
         }
     },
@@ -52,11 +53,11 @@ export default {
     methods: {
         search_elements: function() {
             this.results = []
-            this.first_search = false
-            this.elements.match(/[^\r\n]+/g).forEach(elem => {
-                axios.get(`/api/whitelist/search/${elem.trim()}`, { 
-                    timeout: 10000, 
-                    headers: {'X-Token': this.jwt} 
+            const terms = (this.elements.trim() || "*").match(/[^\r\n]+/g) || ["*"]
+            terms.forEach(elem => {
+                axios.get(`/api/whitelist/search/${elem.trim()}`, {
+                    timeout: 10000,
+                    headers: {'X-Token': this.jwt}
                 }).then(response => {
                     if(response.data.results.length>0){
                         this.results = [].concat(this.results, response.data.results);
@@ -88,7 +89,7 @@ export default {
         }
     },
     created: function() {
-        this.get_jwt()
+        this.get_jwt().then(() => { this.search_elements() })
     }
 }
 </script>
