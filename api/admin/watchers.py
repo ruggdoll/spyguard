@@ -81,7 +81,7 @@ def download_ip2asn_v4_tsv_gz():
     """
     url = _dbip_asn_url()
     r = requests.get(url, timeout=600, stream=True,
-                     headers={"User-Agent": "SpyGuard/2.0 (https://github.com/SpyGuard)"})
+                     headers={"User-Agent": "SpyGuard/3.0 (https://github.com/SpyGuard)"})
     r.raise_for_status()
     raw_gz = io.BytesIO()
     for chunk in r.iter_content(chunk_size=1024 * 1024):
@@ -330,7 +330,7 @@ def watch_mvt_indicators():
         total_added = 0
         try:
             r = requests.get(MVT_INDEX_URL, timeout=30,
-                             headers={"User-Agent": "SpyGuard/2.0"})
+                             headers={"User-Agent": "SpyGuard/3.0"})
             r.raise_for_status()
             index = _yaml.safe_load(r.text)
             bundles = _stix2_find_bundles(index)
@@ -344,7 +344,7 @@ def watch_mvt_indicators():
         for url, label in bundles:
             try:
                 br = requests.get(url, timeout=60,
-                                  headers={"User-Agent": "SpyGuard/2.0"})
+                                  headers={"User-Agent": "SpyGuard/3.0"})
                 br.raise_for_status()
                 bundle = json.loads(br.text)
             except Exception as exc:

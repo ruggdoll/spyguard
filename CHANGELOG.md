@@ -4,6 +4,55 @@ All notable changes to SpyGuard will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0] — 2026-08-05
+
+### Added — CTI layer upgrade
+
+- **T1 — Composite scoring** (`analysis/classes/engine_scoring.py`, `engine.py`)
+  Weighted signal accumulation replaces the previous binary suspicious flag.
+  Thresholds: Low → Moderate at 4.0 pts, Moderate → High at 8.0 pts.
+  Hardened quarantine thresholds: Moderate at 2.5 pts, High at 6.0 pts.
+
+- **T2 — JA3/JA4 fingerprint detection** (`analysis/classes/engine.py`)
+  TLS client hello fingerprints matched against IOC database; weight 5.0 pts each.
+  MISP ingestion extended to `ja3-fingerprint-md5` attribute type.
+
+- **T3 — MISP auto-sync** (`api/admin/watchers.py`, `api/admin/app/classes/misp.py`)
+  Watchers daemon polls all configured MISP instances on a schedule
+  (`backend.misp_sync_interval_hours`, default 6h) with up to 5 retries.
+  Each sync is recorded in `misp_sync_log` (SQLite) for audit purposes.
+
+- **T4 — Post-exposure quarantine** (`api/admin/app/blueprints/cti.py`, `analysis/utils.py`)
+  New `/cti/quarantine/add` and `/cti/quarantine/list` admin API endpoints.
+  Active quarantine windows apply hardened detection thresholds in the engine.
+  Schema: `cti_quarantine` table added to `assets/scheme.sql`.
+
+- **T5 — Structural TLS signals** (`analysis/classes/engine_infra.py`)
+  Two new IOC-list-independent signals surfaced for every TLS flow:
+  - `INFRA-01 tls_no_sni` (3.0 pts) — TLS ClientHello without SNI extension.
+  - `INFRA-02 direct_ip_no_dns` (2.5 pts) — TLS to an IP with no DNS answer seen in the capture.
+
+- **T6 — Domain mimicry heuristic** (`analysis/classes/engine_dns.py`)
+  `_mimicry_match()` detects fake news/media domains used by spyware operators
+  by requiring both a media keyword (`news`, `press`, `times`, `herald`, …) and a
+  geo-political term (`kazakh`, `iranian`, `malagasy`, `uae`, `gulf`, …) in the SLD label.
+  Weight: 3.0 pts (`MIMICRY-01`). Longest-match sorting prevents false negatives.
+
+- **T7 — MVT/Amnesty STIX2 integration** (`api/admin/app/classes/mvt.py`, `watchers.py`)
+  `stix2_find_bundles()` resolves the current `indicators.yaml` format
+  (`{github: {owner, repo, branch, path}}`) and the legacy `stix2_url` fallback.
+  `watch_mvt_indicators()` fetches and ingests all 16 STIX2 bundles on a schedule
+  (`backend.mvt_sync_interval_hours`, default 24h), tagged `spyware / white`.
+  Bundles include: Pegasus, Predator, Candiru, Operation Triangulation, NoviSpy,
+  Wintego Helios, RCS Lab, QuaDream KingSpawn, WyrmSpy/DragonEgg, DarkSword,
+  Coruna, Morpheus, ECHAP stalkerware.
+
+- **Cisco Umbrella Top-1M** (`api/admin/watchers.py`) — downloaded at watcher startup
+  as a JSON asset for fast domain reputation lookups.
+
+- **db-ip.com ASN data** (`api/admin/watchers.py`) — replaces iptoasn.com
+  (blocked by Cloudflare); same TSV format, CC-BY 4.0, refreshed monthly.
+
 ## [Unreleased]
 
 ### Added

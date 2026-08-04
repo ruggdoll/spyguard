@@ -2,8 +2,19 @@
 
 
 > [!IMPORTANT]
-> Version 2 finally emerged after two years devoted to my family, marking a return to the project after an extended period away. An update of Suricata introduced breaking changes in the detection mechanism; version 2 addresses these changes while further enhancing the detection of suspicious network flows. 
-> You can see changes between the V1 and the V2 in this [PR description](https://github.com/SpyGuard/SpyGuard/pull/60). 
+> Version 2 finally emerged after two years devoted to my family, marking a return to the project after an extended period away. An update of Suricata introduced breaking changes in the detection mechanism; version 2 addresses these changes while further enhancing the detection of suspicious network flows.
+> You can see changes between the V1 and the V2 in this [PR description](https://github.com/SpyGuard/SpyGuard/pull/60).
+
+> [!IMPORTANT]
+> **Version 3** brings a major upgrade to the CTI (Cyber Threat Intelligence) layer, significantly raising SpyGuard's ability to detect advanced commercial spyware such as Pegasus, Predator, and Candiru:
+>
+> - **Composite scoring** — detection signals are now weighted and accumulated; a record's threat level upgrades automatically when enough signals converge (Low → Moderate at 4.0 pts, Moderate → High at 8.0 pts).
+> - **JA3/JA4 fingerprint matching** (T2) — TLS client fingerprints are matched against known-malicious hashes, with a score of 5.0 pts each.
+> - **MISP auto-sync** (T3) — MISP instances are polled on a configurable schedule; each sync is recorded in an audit log. JA3 fingerprint attributes are now ingested.
+> - **Post-exposure quarantine** (T4) — after a known CTI publication (e.g. Amnesty Tech report), an operator can declare a quarantine window via the admin API; detection thresholds are hardened during that window (Moderate at 2.5 pts, High at 6.0 pts) to surface rebuilt infrastructure.
+> - **Structural TLS signals** (T5) — two new IOC-list-independent signals: `tls_no_sni` (TLS without SNI extension, score 3.0) and `direct_ip_no_dns` (TLS to an IP with no prior DNS resolution seen, score 2.5).
+> - **Domain mimicry heuristic** (T6) — detects fake news/media domains used by spyware operators (e.g. `kazakhtimes.com`, `presssaudi.io`) by matching a media keyword against a geo-political term in the second-level domain label (score 3.0).
+> - **MVT/Amnesty STIX2 integration** (T7) — the watchers daemon now fetches and ingests all 16 STIX2 IOC bundles from the [mvt-indicators](https://github.com/mvt-project/mvt-indicators) index (Pegasus, Predator, Candiru, Operation Triangulation, NoviSpy, ECHAP stalkerware, and more), refreshed every 24 hours.
 
 
 ### Description 
