@@ -120,6 +120,18 @@
         "SNORT-01": {
             "title": "Suricata rule tiggered: {}",
             "description": "A network detection rule was triggered. It's likely that your device has been compromised or is showing suspicious behavior."
+        },
+        "SCORE-01": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA3": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA4": {
+            "title": "{0}",
+            "description": "{0}"
         }
     },
     "report": {
@@ -157,6 +169,6 @@
         "detection_methods": "Detection methods",
         "analysis_duration": "Analysis duration",
         "instance_uuid": "SpyGuard instance",
-        "seconds" : "second(s)"
+        "seconds": "second(s)"
     }
 }

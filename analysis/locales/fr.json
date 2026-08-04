@@ -120,6 +120,18 @@
         "SNORT-01": {
             "title": "Règle suricata déclanchée : {}",
             "description": "Une règle de détection de réseau a été déclenchée. Il est probable que votre appareil ait été compromis ou présente un comportement suspect."
+        },
+        "SCORE-01": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA3": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA4": {
+            "title": "{0}",
+            "description": "{0}"
         }
     },
     "report": {
@@ -157,6 +169,6 @@
         "detection_methods": "Méthodes de détection",
         "analysis_duration": "Durée d'analyse",
         "instance_uuid": "Instance de SpyGuard",
-        "seconds" : "seconde(s)"
+        "seconds": "seconde(s)"
     }
 }

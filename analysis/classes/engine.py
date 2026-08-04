@@ -202,6 +202,12 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
         else:
             self._health_event("ip2asn", False, "missing_or_unreadable")
 
+        # JA3/JA4 signature DBs (populated in start_engine).
+        self._ja3_signatures: dict[str, str] = {}
+        self._ja4_signatures: dict[str, str] = {}
+        # Composite scoring weights (populated in start_engine).
+        self._scoring_weights: dict[str, float] = {}
+
     def _health_event(self, name: str, ok: bool, detail: str = "") -> None:
         """Record the health of an external dependency / enrichment step."""
         try:
@@ -217,6 +223,47 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
                     c["last_error"] = str(detail)[:500]
         except Exception:
             pass
+
+    def _add_signal(self, record: dict, name: str, label: str = "") -> None:
+        """Accumulate a named signal onto a record for composite scoring."""
+        from classes.engine_scoring import DEFAULT_WEIGHTS
+        weight = self._scoring_weights.get(name, DEFAULT_WEIGHTS.get(name, 1.0))
+        record.setdefault("_signals", []).append({"name": name, "weight": weight, "label": label})
+        record["_score"] = record.get("_score", 0.0) + weight
+
+    def _apply_composite_score(self, record: dict) -> None:
+        """After all checks on a record, upgrade alert levels based on composite score."""
+        from classes.engine_scoring import UPGRADE_MODERATE_THRESHOLD, UPGRADE_HIGH_THRESHOLD
+        score = record.get("_score", 0.0)
+        if score < UPGRADE_MODERATE_THRESHOLD:
+            return
+        # Find this record's host key to match alerts
+        host_keys = set(record.get("domains", [])) | {record.get("ip_dst", "")}
+        upgraded = False
+        for alert in self.alerts:
+            if alert.get("host") not in host_keys:
+                continue
+            old_level = alert.get("level", "Low")
+            if score >= UPGRADE_HIGH_THRESHOLD and old_level in ("Low", "Moderate"):
+                alert["level"] = "High"
+                upgraded = True
+            elif score >= UPGRADE_MODERATE_THRESHOLD and old_level == "Low":
+                alert["level"] = "Moderate"
+                upgraded = True
+        if upgraded:
+            # Add composite note alert
+            host = record["domains"][0] if record.get("domains") else record.get("ip_dst", "")
+            signals_summary = ", ".join(
+                s["name"] + (f'({s["label"]})' if s.get("label") else "")
+                for s in record.get("_signals", [])
+            )
+            self.alerts.append({
+                "title": f"Composite suspicion score {score:.1f} for {host}",
+                "description": f"Multiple signals detected: {signals_summary}",
+                "host": host,
+                "level": "High" if score >= UPGRADE_HIGH_THRESHOLD else "Moderate",
+                "id": "SCORE-01",
+            })
 
     def _call_with_timeout(self, fn: Callable[[], Any], timeout_s: float) -> tuple[bool, Any, str]:
         """Run fn() with a wall-clock timeout. Returns (ok, result, error_str)."""
@@ -359,6 +406,29 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
             parsers to analyse the output logs.
         """
 
+        # Load composite scoring weights (DEFAULT_WEIGHTS merged with config overrides).
+        import json as _json
+        from classes.engine_scoring import DEFAULT_WEIGHTS
+        self._scoring_weights = {**DEFAULT_WEIGHTS}
+        cfg_weights = get_config(["analysis", "scoring", "weights"]) or {}
+        self._scoring_weights.update({k: float(v) for k, v in cfg_weights.items()})
+
+        # Load JA3/JA4 C2 signature database.
+        ja3_path = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
+            "../../assets/ja3_c2_signatures.json",
+        )
+        try:
+            with open(ja3_path) as f:
+                _ja3_db = _json.load(f)
+            self._ja3_signatures = _ja3_db.get("ja3", {})
+            self._ja4_signatures = _ja3_db.get("ja4", {})
+            self._health_event("ja3_db", True, f"{len(self._ja3_signatures)} ja3 signatures loaded")
+        except Exception as e:
+            self._ja3_signatures = {}
+            self._ja4_signatures = {}
+            self._health_event("ja3_db", False, str(e))
+
         # Parse the eve.json file.
         self.parse_eve_file()
 
@@ -402,6 +472,7 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
             self.check_flow(record)
             self.check_tls(record)
             self.check_http(record)
+            self._apply_composite_score(record)
 
         # Check for failed DNS answers (if spyguard not connected)
         for dnsname in list(set(self.dns_failed)):
@@ -418,6 +489,10 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
         for rec in self.records or []:
             rec.pop("_proto_keys", None)
             rec.pop("_cert_snis_seen", None)
+            rec.pop("_ja3_hashes", None)
+            rec.pop("_ja4_hashes", None)
+            rec.pop("_signals", None)
+            rec.pop("_score", None)
 
     def parse_eve_file(self):
         """This method parses the eve.json file produced by suricata.
@@ -514,6 +589,14 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
                                     snis.add(sni)
                                 else:
                                     rec["certificates"].append({"version": tls["version"], "port": record.get("dest_port")})
+
+                        # JA3/JA4 fingerprint extraction (T2)
+                        ja3_hash = (tls.get("ja3") or {}).get("hash")
+                        ja4_hash = tls.get("ja4")
+                        if ja3_hash:
+                            rec.setdefault("_ja3_hashes", set()).add(ja3_hash)
+                        if ja4_hash:
+                            rec.setdefault("_ja4_hashes", set()).add(ja4_hash)
                     except Exception:
                         self.errors.append(
                             f"Issue when processing the following eve record (tls): {json.dumps(record)}"
@@ -842,6 +925,34 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
                                         "port": protocol.get("port"),
                                         "level": "Moderate",
                                         "id": "PROTO-04"})
+
+        # JA3/JA4 fingerprint matching (T2)
+        if self.iocs_analysis and self._ja3_signatures:
+            for ja3h in record.get("_ja3_hashes", set()):
+                c2_label = self._ja3_signatures.get(ja3h)
+                if c2_label:
+                    record["suspicious"] = True
+                    self._add_signal(record, "ja3_ioc", f"{c2_label} ({ja3h[:8]})")
+                    self.alerts.append({
+                        "title": f"Known C2 JA3 fingerprint: {c2_label}",
+                        "description": f"TLS connection to {resolved_host} ({record['ip_dst']}) matches JA3 fingerprint {ja3h} associated with {c2_label}.",
+                        "host": resolved_host,
+                        "level": "High",
+                        "id": "TLS-JA3",
+                    })
+        if self.iocs_analysis and self._ja4_signatures:
+            for ja4h in record.get("_ja4_hashes", set()):
+                c2_label = self._ja4_signatures.get(ja4h)
+                if c2_label:
+                    record["suspicious"] = True
+                    self._add_signal(record, "ja4_ioc", f"{c2_label}")
+                    self.alerts.append({
+                        "title": f"Known C2 JA4 fingerprint: {c2_label}",
+                        "description": f"TLS connection to {resolved_host} ({record['ip_dst']}) matches JA4 fingerprint {ja4h} associated with {c2_label}.",
+                        "host": resolved_host,
+                        "level": "High",
+                        "id": "TLS-JA4",
+                    })
 
     def get_tor_nodes(self) -> list:
         """Get a list of TOR nodes from dan.me.uk.

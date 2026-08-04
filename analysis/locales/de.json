@@ -120,6 +120,18 @@
         "SNORT-01": {
             "title": "Suricata-Regel ausgelöst: {}",
             "description": "Eine Netzwerkerkennungsregel wurde ausgelöst. Es ist wahrscheinlich, dass Ihr Gerät kompromittiert wurde oder verdächtiges Verhalten aufweist."
+        },
+        "SCORE-01": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA3": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA4": {
+            "title": "{0}",
+            "description": "{0}"
         }
     },
     "report": {
@@ -157,6 +169,6 @@
         "detection_methods": "Nachweismethoden",
         "analysis_duration": "Analysezeit",
         "instance_uuid": "Instanz von SpyGuard",
-        "seconds" : "zweite"
+        "seconds": "zweite"
     }
 }

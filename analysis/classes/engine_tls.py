@@ -284,6 +284,8 @@ class EngineTLSMixin:
         """Run active SSL checks concurrently and cache results."""
         targets = []
         seen = set()
+        # Build (host, port) -> record mapping so signals can be attributed.
+        key_to_record: dict[tuple[str, int], dict] = {}
         for record in self.records:
             if record.get("whitelisted"):
                 continue
@@ -293,6 +295,8 @@ class EngineTLSMixin:
                 if not host:
                     continue
                 key = (host, port)
+                if key not in key_to_record:
+                    key_to_record[key] = record
                 if key in seen:
                     continue
                 seen.add(key)
@@ -306,7 +310,10 @@ class EngineTLSMixin:
 
         workers = min(self._active_ssl_workers, len(targets))
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            future_by_key = {pool.submit(self.active_check_ssl, host, port): (host, port) for host, port in targets}
+            future_by_key = {
+                pool.submit(self.active_check_ssl, host, port, key_to_record.get((host, port))): (host, port)
+                for host, port in targets
+            }
             # Hard cap to avoid rare hangs (DNS resolver / socket edge cases).
             total_timeout_s = max(30, 8 * len(future_by_key))
             try:
@@ -326,7 +333,7 @@ class EngineTLSMixin:
                     for host, port in targets:
                         self._active_ssl_cache.setdefault((host, port), False)
 
-    def active_check_ssl(self, host, port):
+    def active_check_ssl(self, host, port, record=None):
         """This method:
 
         1. Check the issuer and subject of a certificate directly by connecting
@@ -339,6 +346,7 @@ class EngineTLSMixin:
         Args:
             host (str): Host to connect to
             port (int): Port to connect to
+            record (dict, optional): Flow record to emit signals onto.
         """
         try:
             suspect = False
@@ -363,6 +371,8 @@ class EngineTLSMixin:
             issuer_tags = self._bl_issuers_map.get(self._normalize_dn(issuer))
             if issuer_tags and any(self._indicator_type_enabled(t) for t in issuer_tags):
                 with self._active_ssl_lock:
+                    if record is not None:
+                        self._add_signal(record, "cert_issuer_ioc", host)
                     self.alerts.append(
                         {
                             "title": self.template["SSL-02"]["title"].format(host),
@@ -378,6 +388,8 @@ class EngineTLSMixin:
 
             if issuer == subject:
                 with self._active_ssl_lock:
+                    if record is not None:
+                        self._add_signal(record, "cert_self_signed", host)
                     self.alerts.append({"title": self.template["SSL-03"]["title"].format(host),
                                         "description": self.template["SSL-03"]["description"].format(host),
                                         "host": host,
@@ -391,6 +403,8 @@ class EngineTLSMixin:
                 cert_tag = self._bl_certs_map.get(certhash)
                 if cert_tag and self._indicator_type_enabled(cert_tag):
                     with self._active_ssl_lock:
+                        if record is not None:
+                            self._add_signal(record, "cert_hash_ioc", host)
                         self.alerts.append({"title": self.template["SSL-04"]["title"].format(host, cert_tag.upper()),
                                             "description": self.template["SSL-04"]["description"].format(host),
                                             "host": host,
@@ -403,6 +417,8 @@ class EngineTLSMixin:
                     jarm_tag = self._bl_jarms_map.get(host_jarm)
                     if jarm_tag and self._indicator_type_enabled(jarm_tag):
                         with self._active_ssl_lock:
+                            if record is not None:
+                                self._add_signal(record, "jarm_ioc", host)
                             self.alerts.append({"title": self.template["SSL-05"]["title"].format(host, jarm_tag.upper()),
                                                 "description": self.template["SSL-05"]["description"].format(host),
                                                 "host": host,
@@ -444,12 +460,13 @@ class EngineTLSMixin:
 
                 if "sni" in certificate and certificate["sni"] not in record["domains"]:
                     if certificate["sni"]:
-                        if self.check_dnsname(certificate["sni"]):
+                        if self.check_dnsname(certificate["sni"], record=record):
                             record["suspicious"] = True
 
                 default_ports = [int(p) for p in self.tls_default_ports]
                 if tls_port not in default_ports:
                     record["suspicious"] = True
+                    self._add_signal(record, "tls_nonstandard_port", str(tls_port))
                     self.alerts.append({"title": self.template["SSL-01"]["title"].format(tls_port, resolved_host),
                                         "description": self.template["SSL-01"]["description"].format(resolved_host),
                                         "host": resolved_host,
@@ -467,6 +484,7 @@ class EngineTLSMixin:
                     tags = self._bl_issuers_map.get(self._normalize_dn(issuerdn))
                     if tags and any(self._indicator_type_enabled(t) for t in tags):
                         record["suspicious"] = True
+                        self._add_signal(record, "cert_free_ca", resolved_host)
                         self.alerts.append({"title": self.template["SSL-02"]["title"].format(resolved_host),
                                             "description": self.template["SSL-02"]["description"],
                                             "host": resolved_host,
@@ -477,6 +495,7 @@ class EngineTLSMixin:
 
                     elif subject and self._normalize_dn(issuerdn) == self._normalize_dn(subject):
                         record["suspicious"] = True
+                        self._add_signal(record, "cert_self_signed", resolved_host)
                         self.alerts.append({"title": self.template["SSL-03"]["title"].format(resolved_host),
                                             "description": self.template["SSL-03"]["description"].format(resolved_host),
                                             "host": resolved_host,

@@ -8,6 +8,8 @@ analysis:
   iocs: true
   max_ports: 1024
   remote: false
+  scoring:
+    weights: {}
   tls_default_ports:
   - 443
   - 465

@@ -120,6 +120,18 @@
         "SNORT-01": {
             "title": "Regla Suricata activada: {}",
             "description": "Una regla de detección ha sido activada. Probablemente su dispositivo está comprometido o presenta comportamiento sospechoso."
+        },
+        "SCORE-01": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA3": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA4": {
+            "title": "{0}",
+            "description": "{0}"
         }
     },
     "report": {
@@ -157,6 +169,6 @@
         "detection_methods": "Métodos de detección",
         "analysis_duration": "Tiempo de análisis",
         "instance_uuid": "Instancia de SpyGuard",
-        "seconds" : "segundo(s)"
+        "seconds": "segundo(s)"
     }
 }

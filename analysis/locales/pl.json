@@ -10,7 +10,7 @@
         },
         "PROTO-03": {
             "title": "Komunikacja HTTP z hostem {}.",
-            "description": "Twoje urządzenie komunikowało się z hostem {} przy użyciu nieszyfrowanego protokołu HTTP. To niekoniecznie złośliwa komunikacja, rzadko się jednak zdarza nieszyfrowana komunikacja w przypadku aplikacji działających w tle - gdy użytkownik nie odwiedzi samemu nieszyfrowanej strony. Sprawdź reputację hosta w internecie." 
+            "description": "Twoje urządzenie komunikowało się z hostem {} przy użyciu nieszyfrowanego protokołu HTTP. To niekoniecznie złośliwa komunikacja, rzadko się jednak zdarza nieszyfrowana komunikacja w przypadku aplikacji działających w tle - gdy użytkownik nie odwiedzi samemu nieszyfrowanej strony. Sprawdź reputację hosta w internecie."
         },
         "PROTO-04": {
             "title": "Komunikacja HTTP z hostem {} na niestandardowym porcie ({}).",
@@ -120,6 +120,18 @@
         "SNORT-01": {
             "title": "Zadziałała reguła Suricata: {}",
             "description": "Reguła wykrywania zdarzeń została aktywowana. Jest prawdopodobne, że Twoje urządznie jest skompromitowane lub wykazuje podejrzane zachowanie."
+        },
+        "SCORE-01": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA3": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA4": {
+            "title": "{0}",
+            "description": "{0}"
         }
     },
     "report": {
@@ -157,6 +169,6 @@
         "detection_methods": "Metody detekcji",
         "analysis_duration": "Czas trwania analizy",
         "instance_uuid": "Instancja SpyGuard",
-        "seconds" : "sekund(y)"
+        "seconds": "sekund(y)"
     }
 }

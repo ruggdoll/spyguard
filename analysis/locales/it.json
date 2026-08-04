@@ -120,6 +120,18 @@
         "UMBRELLA-01": {
             "title": "Il dominio {} non è nel top 500K Cisco Umbrella",
             "description": "Il dominio {} non compare tra i 500000 nomi più richiesti nella telemetria DNS globale Cisco Umbrella. Non è prova di attività malevola — molti siti legittimi sono poco comuni — ma conviene verificare l'host, soprattutto se altri avvisi lo citano."
+        },
+        "SCORE-01": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA3": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA4": {
+            "title": "{0}",
+            "description": "{0}"
         }
     },
     "report": {

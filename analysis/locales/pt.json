@@ -120,6 +120,18 @@
         "SNORT-01": {
             "title": "Regra do Suricata acionada: {}",
             "description": "Uma regra de detecção de rede foi acionada. É provável que o dispositivo tenha sido comprometido ou apresente comportamento suspeito."
+        },
+        "SCORE-01": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA3": {
+            "title": "{0}",
+            "description": "{0}"
+        },
+        "TLS-JA4": {
+            "title": "{0}",
+            "description": "{0}"
         }
     },
     "report": {

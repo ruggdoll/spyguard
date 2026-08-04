@@ -507,10 +507,10 @@ class EngineDNSMixin:
 
         # Check each associated domain.
         for domain in record["domains"]:
-            if self.check_dnsname(domain):
+            if self.check_dnsname(domain, record=record):
                 record["suspicious"] = True
 
-    def check_dnsname(self, dnsname):
+    def check_dnsname(self, dnsname, record=None):
         """Check a domain name against a set of IOCs / heuristics.
               1. Check if the parent domain is blacklisted.
               2. Check if the parent domain is a Free DNS.
@@ -518,9 +518,10 @@ class EngineDNSMixin:
               4. Check if the name servers associated to the domain are suspicious.
               5. Check if the domain have been registered recently - less than one year.
         Args:
-            record (dict): record to be processed.
+            dnsname (str): domain name to check.
+            record (dict, optional): flow record to emit signals onto.
         Returns:
-            supicious (bool) : if an alert has been leveraged.
+            suspicious (bool) : if an alert has been leveraged.
         """
         suspicious = False
 
@@ -583,6 +584,8 @@ class EngineDNSMixin:
                         if not self._indicator_type_enabled(tag):
                             continue
                         suspicious = True
+                        if record is not None:
+                            self._add_signal(record, "domain_freedns", dnsname)
                         self.alerts.append(
                             {
                                 "title": self.template["IOC-05"]["title"].format(dnsname),
@@ -604,6 +607,8 @@ class EngineDNSMixin:
                         if not self._indicator_type_enabled(tag):
                             continue
                         suspicious = True
+                        if record is not None:
+                            self._add_signal(record, "domain_suspicious_tld", dnsname)
                         self.alerts.append(
                             {
                                 "title": self.template["IOC-06"]["title"].format(dnsname),
@@ -649,6 +654,8 @@ class EngineDNSMixin:
                             continue
                         if any(self._indicator_type_enabled(tag) for tag in tags):
                             suspicious = True
+                            if record is not None:
+                                self._add_signal(record, "domain_suspicious_ns", dnsname)
                             self.alerts.append(
                                 {
                                     "title": self.template["ACT-01"]["title"].format(dnsname, name_servers[0]),
@@ -698,6 +705,11 @@ class EngineDNSMixin:
                         creation_days = abs((datetime.now() - creation_date).days)
                         if creation_days < WHOIS_RECENT_REGISTRATION_MAX_DAYS:
                             suspicious = True
+                            if record is not None:
+                                if creation_days < 180:
+                                    self._add_signal(record, "domain_recent_6mo", dnsname)
+                                else:
+                                    self._add_signal(record, "domain_recent_1yr", dnsname)
                             self.alerts.append(
                                 {"title": self.template["ACT-02"]["title"].format(dnsname, creation_days),
                                  "description": self.template["ACT-02"]["description"].format(dnsname),
@@ -727,5 +739,5 @@ class EngineDNSMixin:
                 if http["hostname"] not in record["domains"]:
                     if re.match(r"^[a-z\.0-9\-]+\.[a-z\-]{2,}$", http["hostname"]):
                         if http["hostname"]:
-                            if self.check_dnsname(http["hostname"]):
+                            if self.check_dnsname(http["hostname"], record=record):
                                 record["suspicious"] = True
