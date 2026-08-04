@@ -148,7 +148,7 @@ def auth_headers():
 def clean_db():
     """Truncate all DB tables before each test for full isolation."""
     from app import db
-    from app.db.models import Ioc, MISPInst, Whitelist
+    from app.db.models import Ioc, MISPInst, Whitelist, CTIQuarantine
 
     yield
 
@@ -156,4 +156,5 @@ def clean_db():
     db.session.query(Ioc).delete()
     db.session.query(Whitelist).delete()
     db.session.query(MISPInst).delete()
+    db.session.query(CTIQuarantine).delete()
     db.session.commit()

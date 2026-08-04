@@ -206,6 +206,7 @@ class IOCIndex:
         bl_freedns: list[list[Any]],
         bl_certs: list[list[Any]],
         bl_jarms: list[list[Any]],
+        bl_ja3s: list[list[Any]],
         bl_nameservers: list[list[Any]],
         bl_tlds: list[list[Any]],
         bl_issuers: list[list[Any]],
@@ -219,6 +220,7 @@ class IOCIndex:
         self.bl_freedns = bl_freedns
         self.bl_certs = bl_certs
         self.bl_jarms = bl_jarms
+        self.bl_ja3s = bl_ja3s
         self.bl_nameservers = bl_nameservers
         self.bl_tlds = bl_tlds
         self.bl_issuers = bl_issuers
@@ -263,6 +265,7 @@ class IOCIndex:
 
         self.bl_certs_map = {value: tag for value, tag in (self.bl_certs or []) if value}
         self.bl_jarms_map = {value: tag for value, tag in (self.bl_jarms or []) if value}
+        self.bl_ja3s_map: dict[str, str] = {value: tag for value, tag in (self.bl_ja3s or []) if value}
 
         self.bl_issuers_map: dict[str, set[str]] = {}
         for value, tag in (self.bl_issuers or []):

@@ -23,6 +23,8 @@ analysis:
 backend:
   login: userlogin
   password: userpassword
+  misp_sync_interval_hours: 6
+  mvt_sync_interval_hours: 24
   remote_access: true
 frontend:
   backend_option: true

@@ -11,6 +11,7 @@ from app.blueprints.misp import misp_bp
 from app.blueprints.watchers import watchers_bp
 from app.blueprints.local_assets import local_assets_bp
 from app.blueprints.update import update_bp
+from app.blueprints.cti import cti_bp
 
 import datetime
 import secrets
@@ -69,6 +70,7 @@ app.register_blueprint(misp_bp, url_prefix='/api/misp')
 app.register_blueprint(watchers_bp, url_prefix='/api/watchers')
 app.register_blueprint(local_assets_bp, url_prefix='/api/local-assets')
 app.register_blueprint(update_bp, url_prefix='/api/update')
+app.register_blueprint(cti_bp, url_prefix='/api/cti')
 
 if __name__ == '__main__':
     ssl_cert = "{}/{}".format(path[0], 'cert.pem')

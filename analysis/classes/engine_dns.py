@@ -20,6 +20,65 @@ UMBRELLA_TOP500K = 500_000
 IPTHC_LOOKUP_URL = "https://ip.thc.org/api/v1/lookup"
 WHOIS_RECENT_REGISTRATION_MAX_DAYS = 548
 
+# ---------------------------------------------------------------------------
+# T6 — Domain mimicry heuristic
+# Detects fake news/media domains with geo branding, a recurring Predator/
+# Intellexa pattern (e.g. domains imitating Kazakh/Malagasy local press).
+# ---------------------------------------------------------------------------
+
+_MEDIA_KEYWORDS: frozenset = frozenset({
+    "news", "press", "times", "daily", "weekly", "post",
+    "herald", "gazette", "tribune", "journal", "monitor",
+    "media", "radio", "channel", "broadcast", "wire",
+    "report", "update", "actualite", "actualites",
+})
+
+# Geo identifiers commonly used in mercenary spyware C2/infection domain names
+# (based on public Amnesty / Citizen Lab / Sekoia campaign reporting).
+_GEO_TERMS: frozenset = frozenset({
+    # Regions
+    "africa", "african", "asia", "asian", "europe", "european",
+    "mideast", "mena", "gulf", "maghreb", "caucasus", "latam",
+    # Countries / adjectives seen in documented campaigns
+    "kazakh", "afghan", "arab", "arabic", "iraqi", "saudi",
+    "yemeni", "sudanese", "libyan", "moroccan", "algerian",
+    "tunisian", "egyptian", "emirati", "bahraini", "jordanian",
+    "lebanese", "syrian", "iran", "iranian", "turkish", "india", "indian",
+    "pakistan", "ugandan", "kenyan", "ethiopian", "ghana", "nigerian",
+    "cambodian", "thai", "myanmar", "uzbek", "georgian", "ukrainian",
+    "russian", "spanish", "greek", "serbian", "indonesia", "malagasy",
+    "madagascar", "ivory", "senegal", "rwanda",
+    # Common abbreviated forms
+    "uae", "gcc", "ksa",
+})
+
+
+def _mimicry_match(dnsname: str) -> tuple:
+    """Return (matched: bool, media_kw: str, geo_term: str) for a domain name.
+
+    Checks whether the SLD label (everything before the TLD, lowercased) contains
+    both a media/news keyword and a geographic identifier.
+
+    Example matches: kazakhtimes.com, pressafrica.net, africannews.io
+    """
+    try:
+        from publicsuffix2 import get_sld as _get_sld
+        sld = str(_get_sld(dnsname) or dnsname)
+    except Exception:
+        sld = str(dnsname)
+
+    # Work on the label before the TLD (e.g. "kazakhtimes" from "kazakhtimes.com").
+    parts = sld.lower().rstrip(".").rsplit(".", 1)
+    label = parts[0] if len(parts) > 1 else sld.lower().rstrip(".")
+    # Strip common subdomains that may have leaked through (www, m).
+    label = re.sub(r"^(www\d?|m|mobile)\.", "", label)
+
+    # Prefer longer matches to avoid "africa" masking "african".
+    found_media = next((kw for kw in sorted(_MEDIA_KEYWORDS, key=len, reverse=True) if kw in label), None)
+    found_geo = next((geo for geo in sorted(_GEO_TERMS, key=len, reverse=True) if geo in label), None)
+    matched = bool(found_media and found_geo)
+    return (matched, found_media or "", found_geo or "")
+
 
 class EngineDNSMixin:
 
@@ -619,6 +678,38 @@ class EngineDNSMixin:
                             }
                         )
                         break
+
+        if self.heuristics_analysis:
+            # T6: domain mimicry — fake news/press domain with geo branding.
+            # Deduplicates at SLD level; works offline (pure text, no WHOIS/NS).
+            try:
+                from publicsuffix2 import get_sld as _get_sld2
+                _sld_t6 = str(_get_sld2(dnsname) or dnsname)
+            except Exception:
+                _sld_t6 = dnsname
+            if _sld_t6 not in self._mimicry_seen:
+                self._mimicry_seen.add(_sld_t6)
+                _matched, _media_kw, _geo_term = _mimicry_match(dnsname)
+                if _matched:
+                    suspicious = True
+                    if record is not None:
+                        self._add_signal(record, "domain_mimicry",
+                                         f"{_media_kw}+{_geo_term} in {_sld_t6}")
+                    self.alerts.append({
+                        "title": f"Suspected fake news/media domain: {dnsname}",
+                        "description": (
+                            f"The domain '{dnsname}' contains a media/press keyword "
+                            f"('{_media_kw}') combined with a geographic identifier "
+                            f"('{_geo_term}'). This naming pattern is characteristic of "
+                            "infection domains used by Predator/Intellexa and similar "
+                            "operators, who impersonate local news outlets to deliver "
+                            "exploit links. This is a heuristic signal — combine with "
+                            "domain age and other indicators before concluding."
+                        ),
+                        "host": dnsname,
+                        "level": "Low",
+                        "id": "MIMICRY-01",
+                    })
 
         if self.active_analysis and self.connected:
             domain = get_sld(dnsname)

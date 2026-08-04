@@ -43,10 +43,16 @@ definitions = {
             "name"  : "Certificate Issuer DN",
             "auto"  : False
         },
-        { 
+        {
             "type"  : "jarm",
             "regex" : r"^[0-9a-f]{62}$",
             "name"  : "Jarm hash",
+            "auto"  : True
+        },
+        {
+            "type"  : "ja3",
+            "regex" : r"^[0-9a-f]{32}$",
+            "name"  : "JA3 fingerprint (MD5)",
             "auto"  : True
         },
         { 

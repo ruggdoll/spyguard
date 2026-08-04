@@ -40,6 +40,38 @@ def get_whitelist(elem_type):
     return [r[0] for r in res] if res is not None else []
 
 
+def get_active_quarantines() -> list:
+    """Return quarantine events that have not yet expired.
+
+    Returns a list of dicts with keys: id, name, reason, started_at, duration_days.
+    """
+    now = int(__import__("time").time())
+    try:
+        with sqlite3.connect(_db_path) as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS cti_quarantine (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    reason TEXT,
+                    started_at NUMERIC NOT NULL,
+                    duration_days INTEGER NOT NULL DEFAULT 42
+                )
+            """)
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT id, name, reason, started_at, duration_days FROM cti_quarantine"
+            )
+            rows = cur.fetchall() or []
+    except Exception:
+        return []
+    return [
+        {"id": r[0], "name": r[1], "reason": r[2],
+         "started_at": r[3], "duration_days": r[4]}
+        for r in rows
+        if int(r[3]) + int(r[4]) * 86400 > now
+    ]
+
+
 def get_config(path):
     """
         Read a value from the configuration

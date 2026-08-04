@@ -27,11 +27,12 @@ from classes.engine_types import (
 )
 from classes.engine_tls import EngineTLSMixin
 from classes.engine_dns import EngineDNSMixin
+from classes.engine_infra import EngineInfraMixin
 from classes.ip2asn_table import load_ip2asn_v4_table
 from utils import get_config, get_iocs, get_whitelist
 
 
-class Engine(EngineTLSMixin, EngineDNSMixin):
+class Engine(EngineTLSMixin, EngineDNSMixin, EngineInfraMixin):
 
     def __init__(self, capture_directory):
 
@@ -52,6 +53,7 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
         self.dns_failed = []
         self.dns_checked = set()
         self.cert_checked = set()
+        self._mimicry_seen: set[str] = set()  # SLDs already checked for T6 mimicry pattern
         self.errors = []
         self.analysis_end = None
         self._enabled_indicator_types = None
@@ -105,6 +107,7 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
             bl_freedns = get_iocs("freedns")
             bl_certs = get_iocs("sha1cert")
             bl_jarms = get_iocs("jarm")
+            bl_ja3s = get_iocs("ja3")
             bl_nameservers = get_iocs("ns")
             bl_tlds = get_iocs("tld")
             bl_issuers = get_iocs("issuerdn")
@@ -117,6 +120,7 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
             bl_freedns = []
             bl_certs = []
             bl_jarms = []
+            bl_ja3s = []
             bl_nameservers = []
             bl_tlds = []
             bl_issuers = []
@@ -130,6 +134,7 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
             bl_freedns=bl_freedns,
             bl_certs=bl_certs,
             bl_jarms=bl_jarms,
+            bl_ja3s=bl_ja3s,
             bl_nameservers=bl_nameservers,
             bl_tlds=bl_tlds,
             bl_issuers=bl_issuers,
@@ -145,6 +150,7 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
         self.bl_freedns = self.ioc_index.bl_freedns
         self.bl_certs = self.ioc_index.bl_certs
         self.bl_jarms = self.ioc_index.bl_jarms
+        self.bl_ja3s = self.ioc_index.bl_ja3s
         self.bl_nameservers = self.ioc_index.bl_nameservers
         self.bl_tlds = self.ioc_index.bl_tlds
         self.bl_issuers = self.ioc_index.bl_issuers
@@ -205,8 +211,10 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
         # JA3/JA4 signature DBs (populated in start_engine).
         self._ja3_signatures: dict[str, str] = {}
         self._ja4_signatures: dict[str, str] = {}
-        # Composite scoring weights (populated in start_engine).
+        # Composite scoring weights and quarantine thresholds (populated in start_engine).
         self._scoring_weights: dict[str, float] = {}
+        self._score_moderate_threshold: float = 4.0
+        self._score_high_threshold: float = 8.0
 
     def _health_event(self, name: str, ok: bool, detail: str = "") -> None:
         """Record the health of an external dependency / enrichment step."""
@@ -233,9 +241,10 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
 
     def _apply_composite_score(self, record: dict) -> None:
         """After all checks on a record, upgrade alert levels based on composite score."""
-        from classes.engine_scoring import UPGRADE_MODERATE_THRESHOLD, UPGRADE_HIGH_THRESHOLD
+        mod_threshold = self._score_moderate_threshold
+        high_threshold = self._score_high_threshold
         score = record.get("_score", 0.0)
-        if score < UPGRADE_MODERATE_THRESHOLD:
+        if score < mod_threshold:
             return
         # Find this record's host key to match alerts
         host_keys = set(record.get("domains", [])) | {record.get("ip_dst", "")}
@@ -244,10 +253,10 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
             if alert.get("host") not in host_keys:
                 continue
             old_level = alert.get("level", "Low")
-            if score >= UPGRADE_HIGH_THRESHOLD and old_level in ("Low", "Moderate"):
+            if score >= high_threshold and old_level in ("Low", "Moderate"):
                 alert["level"] = "High"
                 upgraded = True
-            elif score >= UPGRADE_MODERATE_THRESHOLD and old_level == "Low":
+            elif score >= mod_threshold and old_level == "Low":
                 alert["level"] = "Moderate"
                 upgraded = True
         if upgraded:
@@ -261,7 +270,7 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
                 "title": f"Composite suspicion score {score:.1f} for {host}",
                 "description": f"Multiple signals detected: {signals_summary}",
                 "host": host,
-                "level": "High" if score >= UPGRADE_HIGH_THRESHOLD else "Moderate",
+                "level": "High" if score >= high_threshold else "Moderate",
                 "id": "SCORE-01",
             })
 
@@ -408,10 +417,36 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
 
         # Load composite scoring weights (DEFAULT_WEIGHTS merged with config overrides).
         import json as _json
-        from classes.engine_scoring import DEFAULT_WEIGHTS
+        from classes.engine_scoring import (DEFAULT_WEIGHTS,
+                                            UPGRADE_MODERATE_THRESHOLD, UPGRADE_HIGH_THRESHOLD,
+                                            QUARANTINE_MODERATE_THRESHOLD, QUARANTINE_HIGH_THRESHOLD)
         self._scoring_weights = {**DEFAULT_WEIGHTS}
         cfg_weights = get_config(["analysis", "scoring", "weights"]) or {}
         self._scoring_weights.update({k: float(v) for k, v in cfg_weights.items()})
+
+        # Check for active post-exposure quarantine windows.
+        from utils import get_active_quarantines
+        active_q = get_active_quarantines()
+        if active_q:
+            self._score_moderate_threshold = float(
+                get_config(["analysis", "scoring", "quarantine_moderate_threshold"])
+                or QUARANTINE_MODERATE_THRESHOLD)
+            self._score_high_threshold = float(
+                get_config(["analysis", "scoring", "quarantine_high_threshold"])
+                or QUARANTINE_HIGH_THRESHOLD)
+            names = ", ".join(q["name"] for q in active_q)
+            self._health_event("quarantine", True,
+                               f"{len(active_q)} active quarantine(s): {names} — "
+                               f"thresholds hardened to {self._score_moderate_threshold}/"
+                               f"{self._score_high_threshold}")
+        else:
+            self._score_moderate_threshold = float(
+                get_config(["analysis", "scoring", "moderate_threshold"])
+                or UPGRADE_MODERATE_THRESHOLD)
+            self._score_high_threshold = float(
+                get_config(["analysis", "scoring", "high_threshold"])
+                or UPGRADE_HIGH_THRESHOLD)
+            self._health_event("quarantine", False, "no active quarantine")
 
         # Load JA3/JA4 C2 signature database.
         ja3_path = os.path.join(
@@ -472,6 +507,7 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
             self.check_flow(record)
             self.check_tls(record)
             self.check_http(record)
+            self.check_infra_layers(record)
             self._apply_composite_score(record)
 
         # Check for failed DNS answers (if spyguard not connected)
@@ -926,10 +962,12 @@ class Engine(EngineTLSMixin, EngineDNSMixin):
                                         "level": "Moderate",
                                         "id": "PROTO-04"})
 
-        # JA3/JA4 fingerprint matching (T2)
-        if self.iocs_analysis and self._ja3_signatures:
+        # JA3/JA4 fingerprint matching (T2 + MISP IOC DB)
+        if self.iocs_analysis:
+            _bl_ja3s_map = self.ioc_index.bl_ja3s_map
             for ja3h in record.get("_ja3_hashes", set()):
-                c2_label = self._ja3_signatures.get(ja3h)
+                # Check static C2 signature DB first, then MISP-sourced IOC DB.
+                c2_label = self._ja3_signatures.get(ja3h) or _bl_ja3s_map.get(ja3h)
                 if c2_label:
                     record["suspicious"] = True
                     self._add_signal(record, "ja3_ioc", f"{c2_label} ({ja3h[:8]})")

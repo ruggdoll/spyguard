@@ -204,6 +204,29 @@ Removed the `@pytest.mark.xfail` markers from the 4 tests that now pass cleanly.
 2 test files, 7 tests  (vitest)
 ```
 
+### Fix: thread-safety SQLite + locales path (bugs exposés par la tâche 6)
+
+#### Problème
+Deux bugs silencieux dans le code migré de subprocess → thread (tâche 6) :
+
+1. `analysis/utils.py` — connexion SQLite créée au niveau module (thread principal Flask),
+   puis utilisée depuis le thread d'analyse → `sqlite3.ProgrammingError: SQLite objects
+   created in a thread can only be used in that same thread`.
+
+2. `analysis/classes/engine.py` ligne 189 — `sys.argv[0]` utilisé pour localiser
+   `locales/`. `sys` avait été supprimé des imports lors du découpage (tâche 5),
+   causant un `NameError: name 'sys' is not defined`.
+
+#### Correctifs
+- `analysis/utils.py` : suppression du `conn` et `cursor` globaux ; chaque fonction
+  (`get_iocs`, `get_whitelist`) ouvre sa propre connexion via `with sqlite3.connect(...)`.
+- `analysis/classes/engine.py` : `sys.argv[0]` → `os.path.dirname(os.path.dirname(
+  os.path.realpath(__file__)))`. `__file__` = `analysis/classes/engine.py`,
+  donc `dirname(dirname(__file__))` = `analysis/` où se trouve `locales/`.
+
+#### Validation
+Capturé et analysé un iPhone réel — rapport généré avec succès.
+
 ### Task 8 — Environnement Docker pour le développement
 
 #### Fichiers créés

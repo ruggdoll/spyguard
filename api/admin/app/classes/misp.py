@@ -122,7 +122,7 @@ class MISP(object):
                     return []
 
                 for attr in r["Attribute"]:
-                    if attr["type"] in ["ip-dst", "domain", "snort", "x509-fingerprint-sha1"]:
+                    if attr["type"] in ["ip-dst", "domain", "snort", "x509-fingerprint-sha1", "ja3-fingerprint-md5"]:
 
                         ioc = {"value": attr["value"],
                                "type": None,
@@ -133,6 +133,8 @@ class MISP(object):
                         v = attr["value"]
                         if isinstance(v, str) and v.startswith("alert "):
                             ioc["type"] = "snort"
+                        elif attr["type"] == "ja3-fingerprint-md5":
+                            ioc["type"] = "ja3"
                         else:
                             for t in defs["iocs_types"]:
                                 if t.get("regex") and re.match(t["regex"], v):

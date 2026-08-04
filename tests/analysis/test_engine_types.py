@@ -173,6 +173,7 @@ def _empty_ioc_index(**overrides):
         bl_freedns=[],
         bl_certs=[],
         bl_jarms=[],
+        bl_ja3s=[],
         bl_nameservers=[],
         bl_tlds=[],
         bl_issuers=[],
@@ -227,3 +228,12 @@ class TestIOCIndex:
         idx = _empty_ioc_index(bl_issuers=[["CN=Evil CA, O=BadOrg", "stalkerware"]])
         # The key in bl_issuers_map is the normalized DN.
         assert len(idx.bl_issuers_map) == 1
+
+    def test_bl_ja3s_map_populated(self):
+        h = "72a589da586844d7f0818ce684948eea"
+        idx = _empty_ioc_index(bl_ja3s=[[h, "apt"]])
+        assert idx.bl_ja3s_map[h] == "apt"
+
+    def test_bl_ja3s_map_empty_by_default(self):
+        idx = _empty_ioc_index()
+        assert idx.bl_ja3s_map == {}

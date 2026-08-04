@@ -199,26 +199,174 @@ def watch_whitelists():
             break
 
 
+def _misp_db_path() -> str:
+    """Resolve the SQLite database path used by the admin API."""
+    import sys as _sys
+    db_url = os.environ.get("SPYGUARD_DB_URL", "")
+    if db_url.startswith("sqlite:////"):
+        return db_url[len("sqlite:////"):]
+    parent = "/".join(_sys.path[0].split("/")[:-2])
+    return os.path.join(parent, "database.sqlite3")
+
+
+def _ensure_sync_log_table(db_path: str) -> None:
+    """Create misp_sync_log if it does not yet exist (upgrade-safe)."""
+    import sqlite3 as _sqlite3
+    with _sqlite3.connect(db_path) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS misp_sync_log (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                misp_id    INTEGER NOT NULL,
+                synced_at  NUMERIC NOT NULL,
+                iocs_added INTEGER NOT NULL DEFAULT 0,
+                status     TEXT NOT NULL,
+                message    TEXT
+            )
+        """)
+        conn.commit()
+
+
+def _log_misp_sync(db_path: str, misp_id: int, iocs_added: int,
+                   status: str, message: str = "") -> None:
+    import sqlite3 as _sqlite3
+    try:
+        with _sqlite3.connect(db_path) as conn:
+            conn.execute(
+                "INSERT INTO misp_sync_log (misp_id, synced_at, iocs_added, status, message) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (misp_id, int(time.time()), iocs_added, status, message),
+            )
+            conn.commit()
+    except Exception as exc:
+        print("[watch_misp] audit log write failed: {}".format(exc))
+
+
 def watch_misp():
     """
-        Retrieve IOCs from misp instances. Each new element is
-        tested and then added to the database.
-    """
-    iocs, misp = IOCs(), MISP()
-    instances = [i for i in misp.get_instances()]
+    Retrieve IOCs from MISP instances on a configurable schedule.
 
-    while instances:
-        for i, ist in enumerate(instances):
-            status = misp.test_instance(ist["url"],
-                                        ist["apikey"],
-                                        ist["verifycert"])
-            if status:
-                for ioc in misp.get_iocs(ist["id"]):
-                    iocs.add(ioc["type"], ioc["tag"], ioc["tlp"],
-                             ioc["value"], "misp-{}".format(ist["id"]))
-                misp.update_sync(ist["id"])
-                instances.pop(i)
-        if instances: time.sleep(60)
+    Runs indefinitely: syncs all configured instances, then sleeps for
+    backend.misp_sync_interval_hours (default 6) before repeating.
+    Each sync attempt is recorded in misp_sync_log for audit purposes.
+    """
+    from app.utils import read_config as _read_config
+    db_path = _misp_db_path()
+    _ensure_sync_log_table(db_path)
+
+    sync_interval_hours = _read_config(("backend", "misp_sync_interval_hours")) or 6
+    sync_interval_seconds = int(sync_interval_hours) * 3600
+
+    while True:
+        iocs, misp = IOCs(), MISP()
+        pending = list(misp.get_instances())
+
+        # Retry loop: keep trying unreachable instances until all succeed or we give up.
+        max_retries = 5
+        retry = 0
+        while pending and retry < max_retries:
+            still_pending = []
+            for ist in pending:
+                reachable = misp.test_instance(ist["url"], ist["apikey"], ist["verifycert"])
+                if reachable:
+                    added = 0
+                    try:
+                        for ioc in misp.get_iocs(ist["id"]):
+                            iocs.add(ioc["type"], ioc["tag"], ioc["tlp"],
+                                     ioc["value"], "misp-{}".format(ist["id"]))
+                            added += 1
+                        misp.update_sync(ist["id"])
+                        _log_misp_sync(db_path, ist["id"], added, "ok",
+                                       "Synced {} IOC(s)".format(added))
+                        print("[watch_misp] instance {} synced: {} IOC(s) added".format(
+                            ist["id"], added))
+                    except Exception as exc:
+                        _log_misp_sync(db_path, ist["id"], added, "error", str(exc))
+                        print("[watch_misp] instance {} error: {}".format(ist["id"], exc))
+                else:
+                    still_pending.append(ist)
+
+            pending = still_pending
+            if pending:
+                retry += 1
+                time.sleep(60)
+
+        for ist in pending:
+            _log_misp_sync(db_path, ist["id"], 0, "unreachable",
+                           "Instance unreachable after {} retries".format(max_retries))
+            print("[watch_misp] instance {} unreachable, skipped".format(ist["id"]))
+
+        print("[watch_misp] next sync in {} hour(s)".format(sync_interval_hours))
+        time.sleep(sync_interval_seconds)
+
+
+from app.classes.mvt import stix2_find_urls as _stix2_find_urls
+from app.classes.mvt import extract_stix2_iocs as _extract_stix2_iocs
+
+
+def watch_mvt_indicators():
+    """Periodically fetch STIX2 IOC bundles from the MVT/Amnesty indicators index.
+
+    Downloads mvt-project/mvt-indicators/main/indicators.yaml, resolves every
+    stix2_url entry, parses domain-name / ipv4-addr / url / indicator objects,
+    and stores results in the IOC database tagged as 'spyware' with source
+    label 'mvt-<bundle_name>'.
+
+    Interval: backend.mvt_sync_interval_hours (default 24h).
+    """
+    import yaml as _yaml
+    from app.utils import read_config as _read_config
+    from app.classes.iocs import IOCs as _IOCs
+
+    MVT_INDEX_URL = (
+        "https://raw.githubusercontent.com/mvt-project/"
+        "mvt-indicators/main/indicators.yaml"
+    )
+
+    sync_interval_hours = _read_config(("backend", "mvt_sync_interval_hours")) or 24
+    sync_interval_seconds = int(sync_interval_hours) * 3600
+
+    while True:
+        print("[watch_mvt] starting sync")
+        total_added = 0
+        try:
+            r = requests.get(MVT_INDEX_URL, timeout=30,
+                             headers={"User-Agent": "SpyGuard/2.0"})
+            r.raise_for_status()
+            index = _yaml.safe_load(r.text)
+            stix2_urls = _stix2_find_urls(index)
+            print("[watch_mvt] found {} STIX2 bundle(s) in index".format(len(stix2_urls)))
+        except Exception as exc:
+            print("[watch_mvt] failed to fetch/parse indicators index: {}".format(exc))
+            time.sleep(sync_interval_seconds)
+            continue
+
+        iocs = _IOCs()
+        for url in stix2_urls:
+            # Derive a short source label from the bundle filename.
+            fname = url.rstrip("/").split("/")[-1]
+            label = "mvt-" + fname.rsplit(".", 1)[0].lower().replace(" ", "_")
+            try:
+                br = requests.get(url, timeout=60,
+                                  headers={"User-Agent": "SpyGuard/2.0"})
+                br.raise_for_status()
+                bundle = json.loads(br.text)
+            except Exception as exc:
+                print("[watch_mvt] failed to fetch bundle {}: {}".format(url, exc))
+                continue
+
+            added_this_bundle = 0
+            for ioc_type, value in _extract_stix2_iocs(bundle, label):
+                try:
+                    iocs.add(ioc_type, "spyware", "white", value, label)
+                    added_this_bundle += 1
+                except Exception:
+                    pass
+            total_added += added_this_bundle
+            print("[watch_mvt] {}: {} IOC(s) added".format(label, added_this_bundle))
+
+        print("[watch_mvt] sync complete: {} total IOC(s) — next in {}h".format(
+            total_added, sync_interval_hours))
+        time.sleep(sync_interval_seconds)
 
 
 try:
@@ -234,7 +382,9 @@ except Exception as exc:
 p1 = Process(target=watch_iocs)
 p2 = Process(target=watch_whitelists)
 p3 = Process(target=watch_misp)
+p4 = Process(target=watch_mvt_indicators)
 
 p1.start()
 p2.start()
 p3.start()
+p4.start()

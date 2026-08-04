@@ -28,12 +28,21 @@ DEFAULT_WEIGHTS: Dict[str, float] = {
     "domain_recent_1yr":     1.0,   # registered < 1 year ago
     "domain_suspicious_ns":  2.0,
     "domain_suspicious_tld": 1.0,
-    "domain_mimicry":        3.0,   # T6 placeholder, not yet emitted
+    "domain_mimicry":        3.0,   # T6: media keyword + geo term in domain name
     # Protocol / flow signals
     "proto_nonstandard_port": 1.0,
     "proto_http_plain":       1.0,
+    # Infrastructure layer signals (T5) — structural, IOC-list-independent
+    "tls_no_sni":             3.0,   # TLS ClientHello without SNI extension
+    "direct_ip_no_dns":       2.5,   # TLS to IP with no DNS answer seen in capture
 }
 
-# Score thresholds for level upgrade
+# Score thresholds for level upgrade (normal mode)
 UPGRADE_MODERATE_THRESHOLD = 4.0   # Low  -> Moderate when record score >= 4
 UPGRADE_HIGH_THRESHOLD     = 8.0   # Moderate -> High when record score >= 8
+
+# Hardened thresholds applied during an active post-exposure quarantine window.
+# Lowered so that fewer signals are needed to escalate — infrastructure rebuilt
+# after a major CTI publication tends to reuse recognizable registration patterns.
+QUARANTINE_MODERATE_THRESHOLD = 2.5
+QUARANTINE_HIGH_THRESHOLD     = 6.0

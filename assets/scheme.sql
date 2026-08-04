@@ -28,3 +28,22 @@ CREATE TABLE "misp" (
 	"last_sync" NUMERIC NOT NULL DEFAULT 0,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
+
+CREATE TABLE "cti_quarantine" (
+	"id"           INTEGER UNIQUE,
+	"name"         TEXT NOT NULL,
+	"reason"       TEXT,
+	"started_at"   NUMERIC NOT NULL,
+	"duration_days" INTEGER NOT NULL DEFAULT 42,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);
+
+CREATE TABLE "misp_sync_log" (
+	"id"         INTEGER UNIQUE,
+	"misp_id"    INTEGER NOT NULL,
+	"synced_at"  NUMERIC NOT NULL,
+	"iocs_added" INTEGER NOT NULL DEFAULT 0,
+	"status"     TEXT NOT NULL,
+	"message"    TEXT,
+	PRIMARY KEY("id" AUTOINCREMENT)
+);

@@ -32,6 +32,15 @@ class MISPInst(db.Model):
         self.last_sync = last_sync
 
 
+class CTIQuarantine(db.Model):
+    def __init__(self, name, reason, started_at, duration_days):
+        self.name = name
+        self.reason = reason
+        self.started_at = started_at
+        self.duration_days = duration_days
+
+
 _mapper_registry.map_imperatively(Whitelist, db.Table('whitelist', db.metadata, autoload_with=db.engine))
 _mapper_registry.map_imperatively(Ioc, db.Table('iocs', db.metadata, autoload_with=db.engine))
 _mapper_registry.map_imperatively(MISPInst, db.Table('misp', db.metadata, autoload_with=db.engine))
+_mapper_registry.map_imperatively(CTIQuarantine, db.Table('cti_quarantine', db.metadata, autoload_with=db.engine))
