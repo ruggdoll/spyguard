@@ -3,7 +3,7 @@
 
 """Tests for the MVT/Amnesty STIX2 bundle parser."""
 
-from app.classes.mvt import stix2_find_urls, extract_stix2_iocs
+from app.classes.mvt import stix2_find_urls, stix2_find_bundles, extract_stix2_iocs
 
 
 class TestStix2FindUrls:
@@ -28,6 +28,91 @@ class TestStix2FindUrls:
     def test_deeply_nested(self):
         data = {"level1": {"level2": [{"stix2_url": "https://deep.com/x.stix2"}]}}
         assert stix2_find_urls(data) == ["https://deep.com/x.stix2"]
+
+
+class TestStix2FindBundles:
+    """Tests for stix2_find_bundles() — current github format + legacy fallback."""
+
+    _RAW = "https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}"
+
+    def _gh(self, owner="mvt-project", repo="mvt-indicators",
+            branch="main", path="indicators/pegasus.stix2", name="Pegasus"):
+        return {"name": name, "github": {"owner": owner, "repo": repo,
+                                          "branch": branch, "path": path}}
+
+    def test_github_format_returns_url_and_label(self):
+        index = {"indicators": [self._gh()]}
+        bundles = stix2_find_bundles(index)
+        assert len(bundles) == 1
+        url, label = bundles[0]
+        expected_url = self._RAW.format(
+            owner="mvt-project", repo="mvt-indicators",
+            branch="main", path="indicators/pegasus.stix2")
+        assert url == expected_url
+
+    def test_label_derived_from_name(self):
+        index = {"indicators": [self._gh(name="Pegasus iOS")]}
+        _, label = stix2_find_bundles(index)[0]
+        assert label == "mvt-pegasus_ios"
+
+    def test_label_derived_from_path_when_no_name(self):
+        entry = {"github": {"owner": "o", "repo": "r", "branch": "main",
+                             "path": "indicators/candiru.stix2"}}
+        index = {"indicators": [entry]}
+        _, label = stix2_find_bundles(index)[0]
+        assert label == "mvt-candiru"
+
+    def test_multiple_github_entries(self):
+        index = {"indicators": [
+            self._gh(path="indicators/pegasus.stix2", name="Pegasus"),
+            self._gh(path="indicators/predator.stix2", name="Predator"),
+        ]}
+        bundles = stix2_find_bundles(index)
+        assert len(bundles) == 2
+
+    def test_missing_owner_skipped(self):
+        entry = {"github": {"repo": "r", "branch": "main", "path": "x.stix2"}}
+        assert stix2_find_bundles({"indicators": [entry]}) == []
+
+    def test_missing_path_skipped(self):
+        entry = {"github": {"owner": "o", "repo": "r", "branch": "main"}}
+        assert stix2_find_bundles({"indicators": [entry]}) == []
+
+    def test_legacy_stix2_url_fallback(self):
+        index = {"stix2_url": "https://legacy.example.com/bundle.stix2"}
+        bundles = stix2_find_bundles(index)
+        assert len(bundles) == 1
+        url, label = bundles[0]
+        assert url == "https://legacy.example.com/bundle.stix2"
+        assert label == "mvt-bundle"
+
+    def test_deduplication_github_and_legacy_same_url(self):
+        raw_url = self._RAW.format(
+            owner="mvt-project", repo="mvt-indicators",
+            branch="main", path="indicators/pegasus.stix2")
+        index = {
+            "indicators": [self._gh()],
+            "stix2_url": raw_url,
+        }
+        bundles = stix2_find_bundles(index)
+        urls = [u for u, _ in bundles]
+        assert urls.count(raw_url) == 1
+
+    def test_empty_index_returns_empty(self):
+        assert stix2_find_bundles({}) == []
+
+    def test_empty_indicators_list(self):
+        assert stix2_find_bundles({"indicators": []}) == []
+
+    def test_non_dict_indicator_skipped(self):
+        index = {"indicators": ["not-a-dict", 42, None]}
+        assert stix2_find_bundles(index) == []
+
+    def test_branch_defaults_to_main(self):
+        entry = {"name": "X", "github": {"owner": "o", "repo": "r", "path": "x.stix2"}}
+        bundles = stix2_find_bundles({"indicators": [entry]})
+        url, _ = bundles[0]
+        assert "/main/" in url
 
 
 class TestExtractStix2IOCs:

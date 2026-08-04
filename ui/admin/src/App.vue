@@ -61,6 +61,17 @@
             </div>
           </div>
           <div class="accordion">
+            <input id="accordion-cti" type="checkbox" name="backend-accordion-checkbox" hidden=""/>
+            <label class="accordion-header c-hand" for="accordion-cti">CTI</label>
+            <div class="accordion-body">
+              <ul class="menu menu-nav">
+                <li class="menu-item">
+                  <span @click="$router.push('/cti/quarantine')">Post-exposure quarantine</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div class="accordion">
             <input id="accordion-instances" type="checkbox" name="backend-accordion-checkbox" hidden=""/>
             <label class="accordion-header c-hand" for="accordion-instances">External sources</label>
             <div class="accordion-body">

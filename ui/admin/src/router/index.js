@@ -74,6 +74,12 @@ const routes = [
     props: true
   },
   {
+    path: '/cti/quarantine',
+    name: 'cti-quarantine',
+    component: () => import('../views/cti-quarantine.vue'),
+    props: true
+  },
+  {
     path: '/update',
     name: 'update',
     component: () => import('../views/update.vue'),
