@@ -54,8 +54,11 @@ export default {
         search_elements: function() {
             this.results = []
             const terms = (this.elements.trim() || "*").match(/[^\r\n]+/g) || ["*"]
-            terms.forEach(elem => {
-                axios.get(`/api/whitelist/search/${elem.trim()}`, {
+            terms.forEach(rawTerm => {
+                const t = rawTerm.trim()
+                // If no wildcard, do a contains search automatically.
+                const term = t.includes("*") ? t : `*${t}*`
+                axios.get(`/api/whitelist/search/${term}`, {
                     timeout: 10000,
                     headers: {'X-Token': this.jwt}
                 }).then(response => {
