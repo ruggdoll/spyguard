@@ -29,16 +29,20 @@ class Update(object):
             res = json.loads(res.content.decode("utf8"))
 
             with open(os.path.join(self.app_path, "VERSION")) as f:
-                cv = f.read()
-                if cv != res[0]["name"]:
-                    return {"status": True,
-                            "message": "A new version is available",
-                            "current_version": cv,
-                            "next_version": res[0]["name"]}
-                else:
+                cv = f.read().strip()
+                latest = res[0]["name"].strip()
+                # VERSION may be a `git describe` string like "v2.1-6-gabcd123".
+                # Extract the base tag (everything before the first "-N-g" suffix).
+                base = cv.split("-")[0]
+                if base == latest or cv == latest:
                     return {"status": True,
                             "message": "This is the latest version",
                             "current_version": cv}
+                else:
+                    return {"status": True,
+                            "message": "A new version is available",
+                            "current_version": cv,
+                            "next_version": latest}
         except:
             return {"status": False,
                     "message": "Something went wrong (no API access nor version file)"}

@@ -76,8 +76,8 @@ export default {
         add_whitelist: function(){
             axios.get(`/api/misc/whitelist/${this.host}`, { timeout: 30000 })
             .then((response) => {
-                if (response && response.data && response.data.status === true) {
-                    // Prefer the normalized element returned by API if present.
+                if (response && response.data) {
+                    // Close on both "added" and "already whitelisted" — element is whitelisted either way.
                     if (response.data.element) this.host = String(response.data.element)
                     this.whitelist_success = true
                     setTimeout(() => { this.display = false }, 2000)
