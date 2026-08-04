@@ -79,7 +79,7 @@ def get_config(path):
     """
     config = yaml.load(open(os.path.join(parent, "config.yaml"),
                             "r"), Loader=yaml.SafeLoader)
-    return reduce(dict.get, path, config)
+    return reduce(lambda d, k: d.get(k) if isinstance(d, dict) else None, path, config)
 
 
 def get_device(token):
