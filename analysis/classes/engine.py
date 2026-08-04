@@ -451,7 +451,7 @@ class Engine(EngineTLSMixin, EngineDNSMixin, EngineInfraMixin):
         # Load JA3/JA4 C2 signature database.
         ja3_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.realpath(__file__))),
-            "../../assets/ja3_c2_signatures.json",
+            "../assets/ja3_c2_signatures.json",
         )
         try:
             with open(ja3_path) as f:
