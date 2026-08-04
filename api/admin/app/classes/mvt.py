@@ -8,8 +8,70 @@ import re
 from urllib.parse import urlparse
 
 
+_GITHUB_RAW = "https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}"
+
+
+def stix2_find_bundles(index: dict) -> list:
+    """Return a list of (url, label) from an MVT indicators.yaml dict.
+
+    Handles two formats:
+    - Legacy:  {"stix2_url": "https://..."}  anywhere in the tree
+    - Current: {"type": "github", "name": "...", "github": {owner, repo, branch, path}}
+               at the top-level indicators list
+    """
+    results = []
+    seen_urls = set()
+
+    def _add(url: str, label: str) -> None:
+        if url and url not in seen_urls:
+            seen_urls.add(url)
+            results.append((url, label))
+
+    # Current format: top-level indicators list with github dicts
+    for entry in index.get("indicators", []):
+        if not isinstance(entry, dict):
+            continue
+        gh = entry.get("github")
+        name = entry.get("name", "")
+        if isinstance(gh, dict):
+            owner = gh.get("owner", "")
+            repo = gh.get("repo", "")
+            branch = gh.get("branch", "main")
+            path = gh.get("path", "")
+            if owner and repo and path:
+                url = _GITHUB_RAW.format(owner=owner, repo=repo,
+                                         branch=branch, path=path)
+                # Derive a short label from the name or filename
+                label = "mvt-" + (
+                    path.rsplit("/", 1)[-1].rsplit(".", 1)[0].lower()
+                    if not name else
+                    name.lower()[:40].replace(" ", "_").replace("/", "_")
+                )
+                _add(url, label)
+
+    # Legacy format: stix2_url key anywhere in the tree
+    def _walk_legacy(obj: object) -> None:
+        if isinstance(obj, dict):
+            v = obj.get("stix2_url")
+            if isinstance(v, str) and v.startswith("http"):
+                fname = v.rstrip("/").split("/")[-1].rsplit(".", 1)[0].lower()
+                _add(v, "mvt-" + fname)
+            for val in obj.values():
+                _walk_legacy(val)
+        elif isinstance(obj, list):
+            for item in obj:
+                _walk_legacy(item)
+
+    _walk_legacy(index)
+    return results
+
+
 def stix2_find_urls(obj, found=None):
-    """Recursively walk parsed YAML/JSON and collect every stix2_url string value."""
+    """Legacy helper — collect every stix2_url string value recursively.
+
+    Kept for backward compatibility with existing tests.
+    Use stix2_find_bundles() for the current MVT indicators.yaml format.
+    """
     if found is None:
         found = []
     if isinstance(obj, dict):

@@ -299,7 +299,7 @@ def watch_misp():
         time.sleep(sync_interval_seconds)
 
 
-from app.classes.mvt import stix2_find_urls as _stix2_find_urls
+from app.classes.mvt import stix2_find_bundles as _stix2_find_bundles
 from app.classes.mvt import extract_stix2_iocs as _extract_stix2_iocs
 
 
@@ -333,18 +333,15 @@ def watch_mvt_indicators():
                              headers={"User-Agent": "SpyGuard/2.0"})
             r.raise_for_status()
             index = _yaml.safe_load(r.text)
-            stix2_urls = _stix2_find_urls(index)
-            print("[watch_mvt] found {} STIX2 bundle(s) in index".format(len(stix2_urls)))
+            bundles = _stix2_find_bundles(index)
+            print("[watch_mvt] found {} STIX2 bundle(s) in index".format(len(bundles)))
         except Exception as exc:
             print("[watch_mvt] failed to fetch/parse indicators index: {}".format(exc))
             time.sleep(sync_interval_seconds)
             continue
 
         iocs = _IOCs()
-        for url in stix2_urls:
-            # Derive a short source label from the bundle filename.
-            fname = url.rstrip("/").split("/")[-1]
-            label = "mvt-" + fname.rsplit(".", 1)[0].lower().replace(" ", "_")
+        for url, label in bundles:
             try:
                 br = requests.get(url, timeout=60,
                                   headers={"User-Agent": "SpyGuard/2.0"})
