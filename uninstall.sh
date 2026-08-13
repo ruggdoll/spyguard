@@ -1,19 +1,26 @@
-
-delete_folder(){
-    echo "[+] Deleting SpyGuard folders"
-    rm -rf /usr/share/spyguard/
-}
+#!/bin/bash
 
 delete_services(){
-    echo "[+] Deleting SpyGuard services"
+    # Stop then disable the services before removing anything they depend on.
+    echo "[+] Stopping SpyGuard services"
+    systemctl stop spyguard-frontend &> /dev/null
+    systemctl stop spyguard-backend &> /dev/null
+    systemctl stop spyguard-watchers &> /dev/null
 
+    echo "[+] Deleting SpyGuard services"
     systemctl disable spyguard-frontend &> /dev/null
     systemctl disable spyguard-backend &> /dev/null
     systemctl disable spyguard-watchers &> /dev/null
 
-    rm /lib/systemd/system/spyguard-frontend.service
-    rm /lib/systemd/system/spyguard-backend.service
-    rm /lib/systemd/system/spyguard-watchers.service
+    rm -f /lib/systemd/system/spyguard-frontend.service
+    rm -f /lib/systemd/system/spyguard-backend.service
+    rm -f /lib/systemd/system/spyguard-watchers.service
+    systemctl daemon-reload
+}
+
+delete_folder(){
+    echo "[+] Deleting SpyGuard folders"
+    rm -rf /usr/share/spyguard/
 }
 
 delete_packages(){
@@ -25,16 +32,24 @@ delete_packages(){
     rm -rf /var/log/suricata
     for pkg in "${pkgs[@]}"
     do
-        apt -y remove $pkg && apt -y purge $pkg
+        apt -y remove "$pkg" && apt -y purge "$pkg"
     done
-    apt autoremove &> /dev/null -y
+    apt autoremove -y &> /dev/null
 }
 
 update_hostname(){
    echo -n "[?] Please provide a new hostname: "
-   read hostname
+   read -r hostname
+
    echo "$hostname" > /etc/hostname
-   sed -i "s/spyguard/$hostname/g" /etc/hosts
+
+   # Undo the targeted 127.0.1.1 rewrite done by install.sh (revert to the new hostname).
+   if grep -qE '^[[:space:]]*127\.0\.1\.1[[:space:]]+' /etc/hosts; then
+     sed -i -E "s/^[[:space:]]*127\.0\.1\.1[[:space:]]+.*/127.0.1.1\t$hostname/" /etc/hosts
+   fi
+
+   # Remove the spyguard.local entry added by install.sh.
+   sed -i -E '/^[[:space:]]*127\.0\.0\.1[[:space:]]+spyguard\.local([[:space:]]|$)/d' /etc/hosts
 }
 
 reboot_box() {
@@ -48,8 +63,8 @@ if [[ $EUID -ne 0 ]]; then
     echo "The update must be run as root. Type in 'sudo bash $0' to run it as root."
 	exit 1
 else
-    delete_folder
     delete_services
+    delete_folder
     update_hostname
     delete_packages
     reboot_box
